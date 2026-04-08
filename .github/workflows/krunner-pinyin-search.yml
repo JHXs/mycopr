@@ -17,7 +17,7 @@ on:
         type: boolean
 
 env:
-  SPEC_FILE: 'krunner-pinyin-search.spec'
+  SPEC_FILE: 'krunner-pinyin-search/krunner-pinyin-search.spec'
   UPSTREAM_REPO: 'AOSC-Dev/krunner-pinyin-search'
   UPSTREAM_BRANCH: 'master'
   SPEC_VAR_COMMIT: 'git_commit'
@@ -110,4 +110,4 @@ jobs:
         with:
           commit_message: "Update version"
           commit_user_name: "GitHub Action"
-          file_pattern: "krunner-pinyin-search.spec"
+          file_pattern: "krunner-pinyin-search/krunner-pinyin-search.spec"

@@ -8,6 +8,8 @@ on:
 jobs:
   update-version:
     runs-on: ubuntu-latest
+    env:
+      SPEC_FILE: 'um-cli-copr/um-cli.spec'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,9 +31,9 @@ jobs:
 
       - name: Update .spec file
         run: |
-          CURRENT_VERSION=$(awk '/^%global[[:space:]]+package_version/ {print $3}' um-cli.spec)
+          CURRENT_VERSION=$(awk '/^%global[[:space:]]+package_version/ {print $3}' "$SPEC_FILE")
           if [ "$CURRENT_VERSION" != "$VERSION" ]; then
-            sed -i "s/^%global[[:space:]]\+package_version.*/%global package_version $VERSION/" um-cli.spec
+            sed -i "s/^%global[[:space:]]\+package_version.*/%global package_version $VERSION/" "$SPEC_FILE"
             echo "updated=true" >> $GITHUB_ENV
           else
             echo "updated=false" >> $GITHUB_ENV
@@ -43,4 +45,4 @@ jobs:
         with:
           commit_message: "Update version"
           commit_user_name: "GitHub Action"
-          file_pattern: "um-cli.spec"
+          file_pattern: "um-cli-copr/um-cli.spec"
