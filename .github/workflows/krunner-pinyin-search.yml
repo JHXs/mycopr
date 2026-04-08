@@ -66,7 +66,7 @@ jobs:
           fi
 
       - name: Update SPEC file
-        if: steps.check.outputs.needs_update == 'true' || inputs.force_update == true
+        if: steps.check.outputs.needs_update == 'true'
         id: update
         run: |
           # 备份原文件
@@ -79,7 +79,7 @@ jobs:
           
           # 更新 %changelog（插入新条目到顶部）
           CHANGELOG_DATE=$(date -d "${{ steps.upstream.outputs.commit_date }}" '+%a %b %d %Y')
-          CHANGELOG_ENTRY="* ${CHANGELOG_DATE} GitHub Actions <actions@github.com> - 0.0.0-${{ steps.upstream.outputs.commit_date }}git${{ steps.upstream.outputs.short_hash }}\n- Auto-update to upstream commit ${{ steps.upstream.outputs.short_hash }}: ${{ steps.upstream.outputs.commit_msg }}"
+          CHANGELOG_ENTRY="* ${CHANGELOG_DATE} GitHub Actions <actions@github.com> - ${{ steps.upstream.outputs.commit_date }}git${{ steps.upstream.outputs.short_hash }}\n- Auto-update to upstream commit ${{ steps.upstream.outputs.short_hash }}: ${{ steps.upstream.outputs.commit_msg }}"
           
           # 找到 %changelog 行并插入新条目
           awk -v entry="$CHANGELOG_ENTRY" '
@@ -99,9 +99,39 @@ jobs:
           echo "✅ SPEC file updated"
 
       - name: Commit and push changes
-        if: steps.check.outputs.needs_update == 'true' || inputs.force_update == true
+        id: push_spec
+        if: steps.check.outputs.needs_update == 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Update version"
           commit_user_name: "GitHub Action"
           file_pattern: "krunner-pinyin-search/krunner-pinyin-search.spec"
+
+      - name: Setup copr-cli
+        if: steps.check.outputs.needs_update == 'true'
+        run: |
+          pip3 install -I copr-cli==1.105
+
+      - name: Login
+        if: steps.check.outputs.needs_update == 'true'
+        run: |
+          copr-cli --config <(echo "${COPR_CLI_CONFIG}") whoami
+        env:
+          COPR_CLI_CONFIG: ${{secrets.COPR_CLI_CONFIG}}
+
+      - name: Build
+        id: build
+        if: steps.check.outputs.needs_update == 'true'
+        run: |
+          # 从 push 步骤的输出中拿到新 commit SHA
+          NEW_SHA="${{ steps.push_spec.outputs.commit_hash }}"
+          # 如果 push 步骤没有产生新提交（比如没有变更），则回退到 github.sha
+          if [ -z "$NEW_SHA" ]; then
+            NEW_SHA="${{ github.sha }}"
+          fi
+          copr-cli --config <(echo "${COPR_CLI_CONFIG}") buildscm --clone-url "https://github.com/${{github.repository}}" --commit "$NEW_SHA" --subdir "${BUILD_DIR}" --spec "${BUILD_PACKAGE}.spec" --type git --method rpkg "${BUILD_REPO}" | sed -n 's/^Created builds: /build_id=/p' | tr -d ',' >> "${GITHUB_OUTPUT}"
+        env:
+          COPR_CLI_CONFIG: ${{secrets.COPR_CLI_CONFIG}}
+          BUILD_REPO: ikunji/krunner-pinyin-search
+          BUILD_DIR: krunner-pinyin-search
+          BUILD_PACKAGE: krunner-pinyin-search
