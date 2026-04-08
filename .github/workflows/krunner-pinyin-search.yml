@@ -1,0 +1,113 @@
+# .github/workflows/krunner-pinyin-search.yml
+# 自动检测上游更新并更新 .spec 文件版本信息
+
+name: krunner-pinyin-search Update
+
+on:
+  # 每天 UTC 0 点检查一次（可调整）
+  schedule:
+    - cron: '0 0 * * *'
+  # 支持手动触发
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force update even if no new commit'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  SPEC_FILE: 'krunner-pinyin-search.spec'
+  UPSTREAM_REPO: 'AOSC-Dev/krunner-pinyin-search'
+  UPSTREAM_BRANCH: 'master'
+  SPEC_VAR_COMMIT: 'git_commit'
+  SPEC_VAR_SHORT: 'git_short'
+  SPEC_VAR_DATE: 'commit_date'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Get latest commit from upstream
+        id: upstream
+        run: |
+          # 获取上游最新 commit 信息
+          LATEST=$(curl -s "https://api.github.com/repos/${{ env.UPSTREAM_REPO }}/commits?sha=${{ env.UPSTREAM_BRANCH }}&per_page=1" | jq -r '.[0]')
+          
+          FULL_HASH=$(echo "$LATEST" | jq -r '.sha')
+          SHORT_HASH=$(echo "$FULL_HASH" | cut -c1-7)
+          COMMIT_DATE=$(echo "$LATEST" | jq -r '.commit.author.date' | cut -d'T' -f1 | tr -d '-')
+          COMMIT_MSG=$(echo "$LATEST" | jq -r '.commit.message' | head -1 | cut -c1-60)
+          
+          echo "full_hash=$FULL_HASH" >> $GITHUB_OUTPUT
+          echo "short_hash=$SHORT_HASH" >> $GITHUB_OUTPUT
+          echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
+          echo "commit_msg=$COMMIT_MSG" >> $GITHUB_OUTPUT
+          
+          echo "📦 Upstream: $SHORT_HASH ($COMMIT_DATE) - $COMMIT_MSG"
+
+      - name: Check if update needed
+        id: check
+        run: |
+          # 读取当前 spec 中的 commit hash
+          CURRENT_HASH=$(grep "^%global ${SPEC_VAR_COMMIT} " "${SPEC_FILE}" | awk '{print $3}')
+          LATEST_HASH="${{ steps.upstream.outputs.full_hash }}"
+          
+          echo "Current: $CURRENT_HASH"
+          echo "Latest:  $LATEST_HASH"
+          
+          if [[ "$CURRENT_HASH" == "$LATEST_HASH" ]]; then
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+            echo "✅ Already up to date"
+          else
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+            echo "🔄 Update needed"
+          fi
+
+      - name: Update SPEC file
+        if: steps.check.outputs.needs_update == 'true' || inputs.force_update == true
+        id: update
+        run: |
+          # 备份原文件
+          cp "${SPEC_FILE}" "${SPEC_FILE}.bak"
+          
+          # 更新变量
+          sed -i "s|^%global ${SPEC_VAR_COMMIT} .*|%global ${SPEC_VAR_COMMIT} ${{ steps.upstream.outputs.full_hash }}|" "${SPEC_FILE}"
+          sed -i "s|^%global ${SPEC_VAR_SHORT} .*|%global ${SPEC_VAR_SHORT} ${{ steps.upstream.outputs.short_hash }}|" "${SPEC_FILE}"
+          sed -i "s|^%global ${SPEC_VAR_DATE} .*|%global ${SPEC_VAR_DATE} ${{ steps.upstream.outputs.commit_date }}|" "${SPEC_FILE}"
+          
+          # 更新 %changelog（插入新条目到顶部）
+          CHANGELOG_DATE=$(date -d "${{ steps.upstream.outputs.commit_date }}" '+%a %b %d %Y')
+          CHANGELOG_ENTRY="* ${CHANGELOG_DATE} GitHub Actions <actions@github.com> - 0.0.0-${{ steps.upstream.outputs.commit_date }}git${{ steps.upstream.outputs.short_hash }}\n- Auto-update to upstream commit ${{ steps.upstream.outputs.short_hash }}: ${{ steps.upstream.outputs.commit_msg }}"
+          
+          # 找到 %changelog 行并插入新条目
+          awk -v entry="$CHANGELOG_ENTRY" '
+            /^%changelog/ { 
+              print entry; 
+              print ""; 
+            } 
+            { print }
+          ' "${SPEC_FILE}" > "${SPEC_FILE}.new"
+          mv "${SPEC_FILE}.new" "${SPEC_FILE}"
+          
+          # 验证语法（可选）
+          if command -v rpmlint &> /dev/null; then
+            rpmlint "${SPEC_FILE}" || echo "⚠️ rpmlint warnings (non-fatal)"
+          fi
+          
+          echo "✅ SPEC file updated"
+
+      - name: Commit and push changes
+        if: steps.check.outputs.needs_update == 'true' || inputs.force_update == true
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update version"
+          commit_user_name: "GitHub Action"
+          file_pattern: "krunner-pinyin-search.spec"
