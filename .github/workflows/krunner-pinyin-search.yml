@@ -107,6 +107,10 @@ jobs:
           commit_user_name: "GitHub Action"
           file_pattern: "krunner-pinyin-search/krunner-pinyin-search.spec"
 
+      - name: Get the new commit SHA
+        id: get_sha
+        run: echo "new_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Setup copr-cli
         if: steps.check.outputs.needs_update == 'true'
         run: |
@@ -124,7 +128,7 @@ jobs:
         if: steps.check.outputs.needs_update == 'true'
         run: |
           # 从 push 步骤的输出中拿到新 commit SHA
-          NEW_SHA="${{ steps.push_spec.outputs.commit_hash }}"
+          NEW_SHA="${{ steps.get_sha.outputs.new_sha }}"
           # 如果 push 步骤没有产生新提交（比如没有变更），则回退到 github.sha
           if [ -z "$NEW_SHA" ]; then
             NEW_SHA="${{ github.sha }}"

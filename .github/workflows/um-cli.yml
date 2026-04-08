@@ -40,13 +40,16 @@ jobs:
           fi
 
       - name: Commit and push changes
-        id: push_spec
         if: env.updated == 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Update version"
           commit_user_name: "GitHub Action"
           file_pattern: "um-cli-copr/um-cli.spec"
+
+      - name: Get the new commit SHA
+        id: get_sha
+        run: echo "new_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Setup copr-cli
         if: env.updated == 'true'
@@ -65,12 +68,11 @@ jobs:
         if: env.updated == 'true'
         run: |
           # 从 push 步骤的输出中拿到新 commit SHA
-          NEW_SHA="${{ steps.push_spec.outputs.commit_hash }}"
+          NEW_SHA="${{ steps.get_sha.outputs.new_sha }}"
           # 如果 push 步骤没有产生新提交（比如没有变更），则回退到 github.sha
           if [ -z "$NEW_SHA" ]; then
             NEW_SHA="${{ github.sha }}"
           fi
-
           copr-cli --config <(echo "${COPR_CLI_CONFIG}") buildscm --clone-url "https://github.com/${{github.repository}}" --commit "$NEW_SHA" --subdir "${BUILD_DIR}" --spec "${BUILD_PACKAGE}.spec" --type git --method rpkg "${BUILD_REPO}" | sed -n 's/^Created builds: /build_id=/p' | tr -d ',' >> "${GITHUB_OUTPUT}"
         env:
           COPR_CLI_CONFIG: ${{secrets.COPR_CLI_CONFIG}}

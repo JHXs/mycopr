@@ -22,7 +22,7 @@ jobs:
       - name: Extract version number
         id: extracted_version
         run: |
-          VERSION=$(curl -s "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=zotero" | grep '^pkgver=' | cut -d= -f2)
+          VERSION=$(curl -s "https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=zotero-bin" | grep '^pkgver=' | cut -d= -f2)
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "Extracted version: $VERSION"
 
@@ -37,13 +37,16 @@ jobs:
           fi
 
       - name: Commit and push changes
-        id: push_spec
         if: env.updated == 'true'
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Update version"
           commit_user_name: "GitHub Action"
           file_pattern: "zotero/zotero.spec"
+
+      - name: Get the new commit SHA
+        id: get_sha
+        run: echo "new_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Setup copr-cli
         if: env.updated == 'true'
@@ -62,7 +65,7 @@ jobs:
         if: env.updated == 'true'
         run: |
           # 从 push 步骤的输出中拿到新 commit SHA
-          NEW_SHA="${{ steps.push_spec.outputs.commit_hash }}"
+          NEW_SHA="${{ steps.get_sha.outputs.new_sha }}"
           # 如果 push 步骤没有产生新提交（比如没有变更），则回退到 github.sha
           if [ -z "$NEW_SHA" ]; then
             NEW_SHA="${{ github.sha }}"
