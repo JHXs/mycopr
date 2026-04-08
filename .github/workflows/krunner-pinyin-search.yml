@@ -9,13 +9,7 @@ on:
     - cron: '0 0 * * *'
   # 支持手动触发
   workflow_dispatch:
-    inputs:
-      force_update:
-        description: 'Force update even if no new commit'
-        required: false
-        default: 'false'
-        type: boolean
-
+  
 env:
   SPEC_FILE: 'krunner-pinyin-search/krunner-pinyin-search.spec'
   UPSTREAM_REPO: 'AOSC-Dev/krunner-pinyin-search'

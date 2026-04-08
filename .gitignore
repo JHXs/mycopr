@@ -1,3 +1,8 @@
 rpmbuild/
 fedpkgs/
 packages
+**pkgs/
+**.tar.gz
+**.tar.bz2
+**.tar.xz
+**.tar.zst
