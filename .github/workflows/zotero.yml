@@ -16,6 +16,9 @@ jobs:
     env:
       SPEC_FILE: 'zotero/zotero.spec'
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Extract version number
         id: extracted_version
         run: |
