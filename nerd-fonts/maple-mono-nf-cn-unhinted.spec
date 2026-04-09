@@ -8,10 +8,10 @@ Summary:        Open source monospace font with round corner, ligatures and Nerd
 License:        OFL-1.1
 URL:            https://github.com/subframe7536/maple-font
 Source0:        https://github.com/subframe7536/maple-font/releases/download/v%{version}/MapleMono-NF-CN-unhinted.zip
-# SHA256: ab88522932cf4015dffeaef6dedc59a22a5fefecdcc6e583d9fcd997da5b7cac
 
 BuildArch:      noarch
 BuildRequires:  unzip
+BuildRequires:  fonts-srpm-macros
 Requires:       fontconfig
 
 %description
@@ -29,7 +29,7 @@ cd %{name}-%{version}
 
 %install
 mkdir -p %{buildroot}%{_fontdir}/%{name}
-cp -p *.ttf %{buildroot}%{_fontdir}/%{name}/
+cp -p %{_builddir}/%{name}-%{version}/*.ttf %{buildroot}%{_fontdir}/%{name}/
 
 %files
 %dir %{_fontdir}/%{name}
@@ -44,5 +44,5 @@ if [ "$1" -eq 0 ]; then
 fi
 
 %changelog
-* Thu Apr 09 2026 hansel <user@example.com> - 7.9-1
-- Initial package for maple-mono-nf-cn-unhinted font v7.9
+* Thu Apr 09 2026 hansel <user@example.com> - 7.8-1
+- Initial package for maple-mono-nf-cn-unhinted font v7.8
