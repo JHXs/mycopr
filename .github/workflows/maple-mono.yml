@@ -46,7 +46,7 @@ jobs:
         with:
           commit_message: "Update version"
           commit_user_name: "GitHub Action"
-          file_pattern: $SPEC_FILE
+          file_pattern: "nerd-fonts/maple-mono-nf-cn-unhinted.spec"
 
       - name: Get the new commit SHA
         id: get_sha
