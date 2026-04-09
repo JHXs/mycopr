@@ -1,4 +1,4 @@
-%global package_version 7.9
+%global package_version 7.8
 
 Name:           maple-mono-nf-cn-unhinted
 Version:        %{package_version}
