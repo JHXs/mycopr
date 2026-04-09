@@ -1,4 +1,5 @@
 %global package_version 7.8
+%{!?_fontbasedir:%global _fontbasedir %{_datadir}/fonts}
 
 Name:           maple-mono-nf-cn-unhinted
 Version:        %{package_version}
@@ -28,19 +29,19 @@ cd %{name}-%{version}
 # Pre-built TTF fonts, no compilation needed
 
 %install
-mkdir -p %{buildroot}%{_fontdir}/%{name}
-cp -p %{_builddir}/%{name}-%{version}/*.ttf %{buildroot}%{_fontdir}/%{name}/
+mkdir -p %{buildroot}%{_fontbasedir}/%{name}
+find %{_builddir}/%{name}-%{version} -type f -name '*.ttf' -exec cp -p {} %{buildroot}%{_fontbasedir}/%{name}/ \;
 
 %files
-%dir %{_fontdir}/%{name}
-%{_fontdir}/%{name}/*.ttf
+%dir %{_fontbasedir}/%{name}
+%{_fontbasedir}/%{name}/*.ttf
 
 %post
-fc-cache -sf %{_fontdir}/%{name} &> /dev/null || :
+fc-cache -sf %{_fontbasedir}/%{name} &> /dev/null || :
 
 %postun
 if [ "$1" -eq 0 ]; then
-    fc-cache -sf %{_fontdir} &> /dev/null || :
+    fc-cache -sf %{_fontbasedir} &> /dev/null || :
 fi
 
 %changelog
