@@ -77,7 +77,7 @@ jobs:
           copr-cli --config <(echo "${COPR_CLI_CONFIG}") buildscm --clone-url "https://github.com/${{github.repository}}" --commit "$NEW_SHA" --subdir "${BUILD_DIR}" --spec "${BUILD_PACKAGE}.spec" --type git --method rpkg "${BUILD_REPO}" | sed -n 's/^Created builds: /build_id=/p' | tr -d ',' >> "${GITHUB_OUTPUT}"
         env:
           COPR_CLI_CONFIG: ${{secrets.COPR_CLI_CONFIG}}
-          BUILD_REPO: ikunji/nerd-fonts
+          BUILD_REPO: ikunji/mycopr
           BUILD_DIR: nerd-fonts
           BUILD_PACKAGE: maple-mono-nf-cn-unhinted
 
