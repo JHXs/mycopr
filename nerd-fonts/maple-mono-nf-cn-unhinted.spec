@@ -1,4 +1,4 @@
-%global package_version 7.8
+%global package_version 7.9
 %{!?_fontbasedir:%global _fontbasedir %{_datadir}/fonts}
 
 Name:           maple-mono-nf-cn-unhinted
