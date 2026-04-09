@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  update-version:
+  update-maple-version:
     runs-on: ubuntu-latest
     env:
       SPEC_FILE: 'nerd-fonts/maple-mono-nf-cn-unhinted.spec'
@@ -32,6 +32,7 @@ jobs:
       - name: Update .spec file
         run: |
           CURRENT_VERSION=$(awk '/^%global[[:space:]]+package_version/ {print $3}' "$SPEC_FILE")
+          echo "Current version in .spec file: $CURRENT_VERSION"
           if [ "$CURRENT_VERSION" != "$VERSION" ]; then
             sed -i "s/^%global[[:space:]]\+package_version.*/%global package_version $VERSION/" "$SPEC_FILE"
             echo "updated=true" >> $GITHUB_ENV
