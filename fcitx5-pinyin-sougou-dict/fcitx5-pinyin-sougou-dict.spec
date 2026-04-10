@@ -24,12 +24,10 @@ This package provides the Sogou Pinyin dictionary for Fcitx5, which is a popular
 # No build steps required for this package as it only contains dict files.
 
 %install
-ls -R .
-mkdir -p %{buildroot}/usr/share/fcitx5/pinyin/dictionaries/
-cp %{SOURCE0} %{buildroot}/usr/share/fcitx5/pinyin/dictionaries/
+install -Dm 644 %{SOURCE0} %{buildroot}%{_datadir}/fcitx5/pinyin/dictionaries/$(basename %{SOURCE0})
 
 %files
-/usr/share/fcitx5/pinyin/dictionaries/
+%{_datadir}/fcitx5/pinyin/dictionaries/
 
 %changelog
 * Fri Apr 10 2026 ikunji <ikunji@duck.com> - 20260410-1
