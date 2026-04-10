@@ -25,7 +25,8 @@ jobs:
       - name: Extract version number
         id: extracted_version
         run: |
-          VERSION=$(curl -sL https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+' | sed 's/^v//' | sed -E 's/^v?GE-Proton//')
+          proton_ver=$(curl -sL https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+' | sed 's/^v//' | sed -E 's/^v?GE-Proton//')
+          VERSION=${proton_ver//-/.}
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           echo "Extracted version: $VERSION"
 
@@ -35,6 +36,7 @@ jobs:
           echo "Current version in .spec file: $CURRENT_VERSION"
           if [ "$CURRENT_VERSION" != "$VERSION" ]; then
             sed -i "s/^%global[[:space:]]\+package_version.*/%global package_version $VERSION/" "$SPEC_FILE"
+            sed -i "s/^%global[[:space:]]\+proton_ver.*/%global proton_ver $proton_ver/" "$SPEC_FILE"
             echo "updated=true" >> $GITHUB_ENV
           else
             echo "updated=false" >> $GITHUB_ENV
