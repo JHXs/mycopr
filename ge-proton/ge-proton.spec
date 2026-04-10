@@ -1,5 +1,5 @@
 %global         debug_package %{nil}
-%global package_version 10-34
+%global package_version 10-33
 %global         proton_name   GE-Proton
 %global         proton_ver    %{package_version}
 %global         proton_nv     %{proton_name}%{proton_ver}
@@ -9,7 +9,7 @@
 %global         __provides_exclude_from ^%{proton_dir}/.*
 
 Name:           ge-proton
-Version:        %{package_version}
+Version:        %{gsub:%{raw_version},-,.}
 Release:        1%{?dist}
 Summary:        Compatibility tool for Steam Play based on Wine and additional components.
 License:        BSD-3-Clause AND LGPL-2.1-or-later AND LGPL-2.0-or-later AND MIT AND Zlib AND MPL-2.0 AND OFL-1.1 AND GPL-2.0-or-later AND BSD-2-Clause AND MS-PL
