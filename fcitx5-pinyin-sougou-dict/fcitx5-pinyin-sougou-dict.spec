@@ -7,7 +7,7 @@ Summary:        Sogou Pinyin dictionary for Fcitx5
 
 License:        MIT
 URL:            https://github.com/JHXs/mycopr
-Source0:        https://raw.githubusercontent.com/JHXs/mycopr/main/fcitx5-pinyin-sougou-dict.dict
+Source0:        https://github.com/JHXs/mycopr/raw/refs/heads/main/fcitx5-pinyin-sougou-dict/fcitx5-pinyin-sougou-dict.dict
 
 BuildArch:      noarch
 # BuildRequires:  unzip
