@@ -1,5 +1,5 @@
 %global         debug_package %{nil}
-%global         package_version 10-33
+%global package_version 10-34
 %global         proton_name   GE-Proton
 %global         proton_ver    %{package_version}
 %global         proton_nv     %{proton_name}%{proton_ver}
