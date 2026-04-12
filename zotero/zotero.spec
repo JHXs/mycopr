@@ -3,7 +3,7 @@
 %define debug_package %{nil}
 %define __requires_exclude ^(libclearkey|libfreeblpriv3|liblgpllibs|libmozavcodec|libmozavutil|libmozgtk|libmozsandbox|libmozsqlite3|libmozwayland|libnspr4|libnss3|libnssckbi|libnssdbm3|libnssutil3|libplc4|libsmime3|libsoftokn3|libssl3|libxul|libgkcodecs)\.so
 %global __provides_exclude_from %{_libdir}/%{name}
-%global package_version 8.0.4
+%global package_version 9.0
 
 Name:		zotero
 Version:	%{package_version}
