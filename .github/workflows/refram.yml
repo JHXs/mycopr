@@ -7,14 +7,14 @@ on:
   #   branches:
   #     - main
   #   paths:
-  #     - refram/**
+  #     - reframe/**
 
 jobs:
   copr:
     name: copr
     runs-on: ubuntu-latest
     env:
-      SPEC_FILE: 'refram/refram.spec'
+      SPEC_FILE: 'reframe/reframe.spec'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
         with:
           commit_message: "Update version"
           commit_user_name: "GitHub Action"
-          file_pattern: "refram/refram.spec"
+          file_pattern: "reframe/reframe.spec"
 
       - name: Get the new commit SHA
         id: get_sha
@@ -74,5 +74,5 @@ jobs:
         env:
           COPR_CLI_CONFIG: ${{secrets.COPR_CLI_CONFIG}}
           BUILD_REPO: ikunji/mycopr
-          BUILD_DIR: refram
-          BUILD_PACKAGE: refram
+          BUILD_DIR: reframe
+          BUILD_PACKAGE: reframe
