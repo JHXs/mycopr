@@ -1,7 +1,7 @@
-%global package_version 1.14.1
+%global package_version 1.14.0
 
 Name:           reframe
-Version:        package_version
+Version:        %{package_version}
 Release:        1%{?dist}
 Summary:        DRM/KMS based remote desktop for Linux that supports Wayland/NVIDIA/headless/login…
 
@@ -69,20 +69,34 @@ tar -xzf %{SOURCE1} -C deps/mvmath --strip-components=1
 %install
 %meson_install
 
-# 备份配置文件
 %files
 %license LICENSE
 %doc README.md
 %config(noreplace) %{_sysconfdir}/%{name}/example.conf
-%{_bindir}/%{name}
-%{_bindir}/%{name}-session
-%{_datadir}/applications/%{name}.desktop
-%{_datadir}/applications/%{name}-session.desktop
-%{_datadir}/glib-2.0/schemas/one.alynx.%{name}.gschema.xml
-%{_datadir}/icons/hicolor/*/apps/%{name}.png
-%{_datadir}/metainfo/one.alynx.%{name}.metainfo.xml
-%{_mandir}/man1/%{name}.1*
-%{_mandir}/man1/%{name}-session.1*
-%{_userunitdir}/%{name}-session.service
+
+# 可执行文件
+%{_bindir}/reframe-server
+%{_bindir}/reframe-session
+%{_bindir}/reframe-streamer
+
+# 库文件
+%{_libdir}/libreframe-common.so
+%{_libdir}/libreframe-mvmath.so
+%dir %{_libdir}/reframe
+%dir %{_libdir}/reframe/vnc
+%{_libdir}/reframe/vnc/libreframe-libvncserver.so
+%{_libdir}/reframe/vnc/libreframe-neatvnc.so
+
+# systemd 单元
+%{_unitdir}/reframe-server@.service
+%{_unitdir}/reframe-streamer@.service
+%{_unitdir}/reframe@.socket
+
+# sysusers / tmpfiles 配置
+%{_sysusersdir}/reframe-sysusers.conf
+%{_tmpfilesdir}/reframe-tmpfiles.conf
+
+# 桌面自动启动（路径是 /etc/xdg/autostart）
+%config(noreplace) %{_sysconfdir}/xdg/autostart/reframe-session.desktop
 
 %changelog

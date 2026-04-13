@@ -1,7 +1,9 @@
 rpmbuild/
 fedpkgs/
 packages
+SOURCES/
 **pkgs/
+**.src.rpm
 **.tar.gz
 **.tar.bz2
 **.tar.xz
