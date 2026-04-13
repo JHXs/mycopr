@@ -1,15 +1,13 @@
 # .github/workflows/krunner-pinyin-search.yml
-# 自动检测上游更新并更新 .spec 文件版本信息
+# 自动检测上游更新并更新 .spec 文件版本信息，同时在多个 Copr 仓库构建
 
 name: krunner-pinyin-search Update
 
 on:
-  # 每天 UTC 0 点检查一次（可调整）
   schedule:
     - cron: '0 0 * * *'
-  # 支持手动触发
   workflow_dispatch:
-  
+
 env:
   SPEC_FILE: 'krunner-pinyin-search/krunner-pinyin-search.spec'
   UPSTREAM_REPO: 'AOSC-Dev/krunner-pinyin-search'
@@ -25,38 +23,39 @@ permissions:
 jobs:
   update-version:
     runs-on: ubuntu-latest
+    outputs:
+      new_sha: ${{ steps.get_sha.outputs.new_sha }}
+      needs_update: ${{ steps.check.outputs.needs_update }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Get latest commit from upstream
         id: upstream
         run: |
-          # 获取上游最新 commit 信息
           LATEST=$(curl -s "https://api.github.com/repos/${{ env.UPSTREAM_REPO }}/commits?sha=${{ env.UPSTREAM_BRANCH }}&per_page=1" | jq -r '.[0]')
-          
+
           FULL_HASH=$(echo "$LATEST" | jq -r '.sha')
           SHORT_HASH=$(echo "$FULL_HASH" | cut -c1-7)
           COMMIT_DATE=$(echo "$LATEST" | jq -r '.commit.author.date' | cut -d'T' -f1 | tr -d '-')
           COMMIT_MSG=$(echo "$LATEST" | jq -r '.commit.message' | head -1 | cut -c1-60)
-          
+
           echo "full_hash=$FULL_HASH" >> $GITHUB_OUTPUT
           echo "short_hash=$SHORT_HASH" >> $GITHUB_OUTPUT
           echo "commit_date=$COMMIT_DATE" >> $GITHUB_OUTPUT
           echo "commit_msg=$COMMIT_MSG" >> $GITHUB_OUTPUT
-          
+
           echo "📦 Upstream: $SHORT_HASH ($COMMIT_DATE) - $COMMIT_MSG"
 
       - name: Check if update needed
         id: check
         run: |
-          # 读取当前 spec 中的 commit hash
           CURRENT_HASH=$(grep "^%global ${SPEC_VAR_COMMIT} " "${SPEC_FILE}" | awk '{print $3}')
           LATEST_HASH="${{ steps.upstream.outputs.full_hash }}"
-          
+
           echo "Current: $CURRENT_HASH"
           echo "Latest:  $LATEST_HASH"
-          
+
           if [[ "$CURRENT_HASH" == "$LATEST_HASH" ]]; then
             echo "needs_update=false" >> $GITHUB_OUTPUT
             echo "✅ Already up to date"
@@ -69,19 +68,15 @@ jobs:
         if: steps.check.outputs.needs_update == 'true'
         id: update
         run: |
-          # 备份原文件
           cp "${SPEC_FILE}" "${SPEC_FILE}.bak"
-          
-          # 更新变量
+
           sed -i "s|^%global ${SPEC_VAR_COMMIT} .*|%global ${SPEC_VAR_COMMIT} ${{ steps.upstream.outputs.full_hash }}|" "${SPEC_FILE}"
           sed -i "s|^%global ${SPEC_VAR_SHORT} .*|%global ${SPEC_VAR_SHORT} ${{ steps.upstream.outputs.short_hash }}|" "${SPEC_FILE}"
           sed -i "s|^%global ${SPEC_VAR_DATE} .*|%global ${SPEC_VAR_DATE} ${{ steps.upstream.outputs.commit_date }}|" "${SPEC_FILE}"
-          
-          # 更新 %changelog（插入新条目到顶部）
+
           CHANGELOG_DATE=$(date -d "${{ steps.upstream.outputs.commit_date }}" '+%a %b %d %Y')
           CHANGELOG_ENTRY="* ${CHANGELOG_DATE} GitHub Actions <actions@github.com> - ${{ steps.upstream.outputs.commit_date }}git${{ steps.upstream.outputs.short_hash }}\n- Auto-update to upstream commit ${{ steps.upstream.outputs.short_hash }}: ${{ steps.upstream.outputs.commit_msg }}"
-          
-          # 找到 %changelog 行并插入新条目
+
           awk -v entry="$CHANGELOG_ENTRY" '
             /^%changelog/ { 
               print entry; 
@@ -90,17 +85,16 @@ jobs:
             { print }
           ' "${SPEC_FILE}" > "${SPEC_FILE}.new"
           mv "${SPEC_FILE}.new" "${SPEC_FILE}"
-          
-          # 验证语法（可选）
+
           if command -v rpmlint &> /dev/null; then
             rpmlint "${SPEC_FILE}" || echo "⚠️ rpmlint warnings (non-fatal)"
           fi
-          
+
           echo "✅ SPEC file updated"
 
       - name: Commit and push changes
-        id: push_spec
         if: steps.check.outputs.needs_update == 'true'
+        id: push_spec
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Update version"
@@ -109,33 +103,50 @@ jobs:
 
       - name: Get the new commit SHA
         id: get_sha
-        run: echo "new_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
-      - name: Setup copr-cli
         if: steps.check.outputs.needs_update == 'true'
         run: |
-          pip3 install -I copr-cli==1.105
-
-      - name: Login
-        if: steps.check.outputs.needs_update == 'true'
-        run: |
-          copr-cli --config <(echo "${COPR_CLI_CONFIG}") whoami
-        env:
-          COPR_CLI_CONFIG: ${{secrets.COPR_CLI_CONFIG}}
-
-      - name: Build
-        id: build
-        if: steps.check.outputs.needs_update == 'true'
-        run: |
-          # 从 push 步骤的输出中拿到新 commit SHA
-          NEW_SHA="${{ steps.get_sha.outputs.new_sha }}"
-          # 如果 push 步骤没有产生新提交（比如没有变更），则回退到 github.sha
-          if [ -z "$NEW_SHA" ]; then
-            NEW_SHA="${{ github.sha }}"
+          # 如果 push 步骤产生了新提交，使用它的 SHA；否则使用当前 github.sha
+          if [ -n "${{ steps.push_spec.outputs.commit_hash }}" ]; then
+            echo "new_sha=${{ steps.push_spec.outputs.commit_hash }}" >> $GITHUB_OUTPUT
+          else
+            echo "new_sha=${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
-          copr-cli --config <(echo "${COPR_CLI_CONFIG}") buildscm --clone-url "https://github.com/${{github.repository}}" --commit "$NEW_SHA" --subdir "${BUILD_DIR}" --spec "${BUILD_PACKAGE}.spec" --type git --method rpkg "${BUILD_REPO}" | sed -n 's/^Created builds: /build_id=/p' | tr -d ',' >> "${GITHUB_OUTPUT}"
+
+  build:
+    needs: update-version
+    if: needs.update-version.outputs.needs_update == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        copr_repo:
+          - ikunji/mycopr
+          - ikunji/krunner-pinyin-search
+    env:
+      BUILD_REPO: ${{ matrix.copr_repo }}
+      BUILD_DIR: krunner-pinyin-search
+      BUILD_PACKAGE: krunner-pinyin-search
+    steps:
+      - name: Setup copr-cli
+        run: pip3 install -I copr-cli==1.105
+
+      - name: Login to Copr
+        run: copr-cli --config <(echo "${COPR_CLI_CONFIG}") whoami
         env:
-          COPR_CLI_CONFIG: ${{secrets.COPR_CLI_CONFIG}}
-          BUILD_REPO: ikunji/mycopr
-          BUILD_DIR: krunner-pinyin-search
-          BUILD_PACKAGE: krunner-pinyin-search
+          COPR_CLI_CONFIG: ${{ secrets.COPR_CLI_CONFIG }}
+
+      - name: Build in Copr
+        id: build
+        run: |
+          NEW_SHA="${{ needs.update-version.outputs.new_sha }}"
+          echo "Building commit ${NEW_SHA} in ${BUILD_REPO}"
+
+          copr-cli --config <(echo "${COPR_CLI_CONFIG}") buildscm \
+            --clone-url "https://github.com/${{ github.repository }}" \
+            --commit "${NEW_SHA}" \
+            --subdir "${BUILD_DIR}" \
+            --spec "${BUILD_PACKAGE}.spec" \
+            --type git \
+            --method rpkg \
+            "${BUILD_REPO}" | sed -n 's/^Created builds: /build_id=/p' | tr -d ',' >> "${GITHUB_OUTPUT}"
+        env:
+          COPR_CLI_CONFIG: ${{ secrets.COPR_CLI_CONFIG }}
