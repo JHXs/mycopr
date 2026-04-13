@@ -1,4 +1,4 @@
-%global package_version 1.14.1
+%global package_version 1.14.0
 
 Name:           reframe
 Version:        %{package_version}

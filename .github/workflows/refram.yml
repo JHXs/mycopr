@@ -10,9 +10,12 @@ on:
   #     - reframe/**
 
 jobs:
-  copr:
-    name: copr
+  update-spec:
+    name: Update spec file
     runs-on: ubuntu-latest
+    outputs:
+      updated: ${{ steps.set_output.outputs.updated }}
+      new_sha: ${{ steps.get_sha.outputs.new_sha }}
     env:
       SPEC_FILE: 'reframe/reframe.spec'
     steps:
@@ -48,31 +51,51 @@ jobs:
         id: get_sha
         run: echo "new_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
+      - name: Set output
+        id: set_output
+        run: |
+          echo "updated=${{ env.updated }}" >> "$GITHUB_OUTPUT"
+
+  build-matrix:
+    name: Build for ${{ matrix.repo }}
+    needs: update-spec
+    if: needs.update-spec.outputs.updated == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repo: [ikunji/mycopr, ikunji/reframe]
+    env:
+      BUILD_DIR: reframe
+      BUILD_PACKAGE: reframe
+    steps:
+      - name: Checkout repository at the updated commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.update-spec.outputs.new_sha }}
+
       - name: Setup copr-cli
-        if: env.updated == 'true'
         run: |
           pip3 install -I copr-cli==1.105
 
       - name: Login
-        if: env.updated == 'true'
         run: |
           copr-cli --config <(echo "${COPR_CLI_CONFIG}") whoami
         env:
-          COPR_CLI_CONFIG: ${{secrets.COPR_CLI_CONFIG}}
+          COPR_CLI_CONFIG: ${{ secrets.COPR_CLI_CONFIG }}
 
       - name: Build
         id: build
-        if: env.updated == 'true'
         run: |
-          # 从 push 步骤的输出中拿到新 commit SHA
-          NEW_SHA="${{ steps.get_sha.outputs.new_sha }}"
-          # 如果 push 步骤没有产生新提交（比如没有变更），则回退到 github.sha
+          NEW_SHA="${{ needs.update-spec.outputs.new_sha }}"
           if [ -z "$NEW_SHA" ]; then
             NEW_SHA="${{ github.sha }}"
           fi
-          copr-cli --config <(echo "${COPR_CLI_CONFIG}") buildscm --clone-url "https://github.com/${{github.repository}}" --commit "$NEW_SHA" --subdir "${BUILD_DIR}" --spec "${BUILD_PACKAGE}.spec" --type git --method rpkg "${BUILD_REPO}" | sed -n 's/^Created builds: /build_id=/p' | tr -d ',' >> "${GITHUB_OUTPUT}"
+          copr-cli --config <(echo "${COPR_CLI_CONFIG}") buildscm \
+            --clone-url "https://github.com/${{ github.repository }}" \
+            --commit "$NEW_SHA" \
+            --subdir "${BUILD_DIR}" \
+            --spec "${BUILD_PACKAGE}.spec" \
+            --type git --method rpkg "${{ matrix.repo }}" \
+            | sed -n 's/^Created builds: /build_id=/p' | tr -d ',' >> "${GITHUB_OUTPUT}"
         env:
-          COPR_CLI_CONFIG: ${{secrets.COPR_CLI_CONFIG}}
-          BUILD_REPO: ikunji/mycopr
-          BUILD_DIR: reframe
-          BUILD_PACKAGE: reframe
+          COPR_CLI_CONFIG: ${{ secrets.COPR_CLI_CONFIG }}
