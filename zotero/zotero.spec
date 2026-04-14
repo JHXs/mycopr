@@ -1,5 +1,3 @@
-# https://download.zotero.org/client/release/8.0.4/Zotero-8.0.4_linux-x86_64.tar.xz
-
 %define debug_package %{nil}
 %define __requires_exclude ^(libclearkey|libfreeblpriv3|liblgpllibs|libmozavcodec|libmozavutil|libmozgtk|libmozsandbox|libmozsqlite3|libmozwayland|libnspr4|libnss3|libnssckbi|libnssdbm3|libnssutil3|libplc4|libsmime3|libsoftokn3|libssl3|libxul|libgkcodecs)\.so
 %global __provides_exclude_from %{_libdir}/%{name}
@@ -36,7 +34,6 @@ install -Dm644 %{buildroot}%{_libdir}/%{name}/icons/icon128.png %{buildroot}%{_d
 install -Dm644 %{buildroot}%{_libdir}/%{name}/icons/symbolic.svg %{buildroot}%{_datadir}/icons/hicolor/symbolic/apps/zotero-symbolic.svg
 
 %files
-%doc
 %{_bindir}/%{name}
 %{_libdir}/%{name}
 %{_datadir}/applications/%{name}.desktop
