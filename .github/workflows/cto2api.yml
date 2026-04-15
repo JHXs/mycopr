@@ -61,7 +61,7 @@ jobs:
         with:
           commit_message: "Update version to ${{ steps.upstream.outputs.version }}"
           commit_user_name: "GitHub Action"
-          file_pattern: "um-cli-copr/um-cli.spec"
+          file_pattern: "cto2api/cto2api.spec"
 
       - name: Get the new commit SHA
         id: get_sha
