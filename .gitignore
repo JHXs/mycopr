@@ -4,6 +4,7 @@ packages
 SOURCES/
 **pkgs/
 **.src.rpm
+**.rpm
 **.tar.gz
 **.tar.bz2
 **.tar.xz

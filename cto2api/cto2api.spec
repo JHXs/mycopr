@@ -4,7 +4,7 @@
 
 # Adjust these based on the upstream release
 %global tag             main
-%global commit 3bdfcbfc72cbfa696de9cbb8dedbe129457e2600
+%global commit xxxc72cbfa696de9cbb8dedbe129457e2600
 %global shortcommit     %(c=%{commit}; echo ${c:0:7})
 
 Name:           cto2api
