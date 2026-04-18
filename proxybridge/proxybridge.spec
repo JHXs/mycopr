@@ -18,10 +18,9 @@ Source3:        proxybridge.png
 
 BuildRequires:  patchelf
 
+Requires:       libnetfilter_queue
 Requires:       iptables
 Requires:       polkit
-Provides:       proxybridge
-Conflicts:      proxybridge
 ExclusiveArch:  x86_64
 
 %description
