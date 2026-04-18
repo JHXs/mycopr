@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ProxyBridge
+GenericName=Universal Proxy Client
+Comment=Launch ProxyBridge GUI with administrator privileges
+Exec=/usr/bin/proxybridge-gui-launcher
+Icon=proxybridge
+Terminal=false
+Categories=Network;Security;
+Keywords=proxy;socks5;http;network;
+StartupNotify=true

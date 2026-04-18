@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Preserve the active graphical session variables across pkexec so the GTK app
+# can connect to the user's display after privilege escalation.
+exec pkexec /usr/bin/env \
+    DISPLAY="${DISPLAY}" \
+    XAUTHORITY="${XAUTHORITY}" \
+    WAYLAND_DISPLAY="${WAYLAND_DISPLAY}" \
+    XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR}" \
+    DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS}" \
+    /usr/bin/ProxyBridgeGUI

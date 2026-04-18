@@ -1,0 +1,112 @@
+name: proxybridge Update
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+env:
+  SPEC_FILE: 'proxybridge/proxybridge.spec'
+  BUILD_DIR: proxybridge
+  BUILD_PACKAGE: proxybridge
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    outputs:
+      new_sha: ${{ steps.get_sha.outputs.new_sha }}
+      needs_update: ${{ steps.check.outputs.needs_update }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: sudo apt update && sudo apt install -y wget curl
+
+      - name: Extract latest version from upstream
+        id: upstream
+        run: |
+          VERSION=$(curl -sL https://api.github.com/repos/InterceptSuite/ProxyBridge/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+' | sed 's/^v//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Latest upstream version: $VERSION"
+
+      - name: Check if update needed
+        id: check
+        run: |
+          CURRENT_VERSION=$(awk '/^%global[[:space:]]+package_version/ {print $3}' "$SPEC_FILE")
+          echo "Current version in spec: $CURRENT_VERSION"
+          LATEST_VERSION="${{ steps.upstream.outputs.version }}"
+          if [ "$CURRENT_VERSION" != "$LATEST_VERSION" ]; then
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+            echo "🔄 Update needed: $CURRENT_VERSION → $LATEST_VERSION"
+          else
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+            echo "✅ Already up to date"
+          fi
+
+      - name: Update .spec file
+        if: steps.check.outputs.needs_update == 'true'
+        run: |
+          sed -i "s/^%global[[:space:]]\+package_version.*/%global package_version ${{ steps.upstream.outputs.version }}/" "$SPEC_FILE"
+          echo "✅ Spec file updated"
+
+      - name: Commit and push changes
+        if: steps.check.outputs.needs_update == 'true'
+        id: push_spec
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Update version to ${{ steps.upstream.outputs.version }}"
+          commit_user_name: "GitHub Action"
+          file_pattern: "proxybridge/proxybridge.spec"
+
+      - name: Get the new commit SHA
+        id: get_sha
+        if: steps.check.outputs.needs_update == 'true'
+        run: |
+          # 使用 git-auto-commit-action 输出的 commit_hash，若未产生新提交则回退到当前 SHA
+          if [ -n "${{ steps.push_spec.outputs.commit_hash }}" ]; then
+            echo "new_sha=${{ steps.push_spec.outputs.commit_hash }}" >> $GITHUB_OUTPUT
+          else
+            echo "new_sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    needs: update-version
+    if: needs.update-version.outputs.needs_update == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        copr_repo:
+          - ikunji/mycopr
+          - ikunji/proxybridge
+    env:
+      BUILD_REPO: ${{ matrix.copr_repo }}
+    steps:
+      - name: Setup copr-cli
+        run: pip3 install -I copr-cli==1.105
+
+      - name: Login to Copr
+        run: copr-cli --config <(echo "${COPR_CLI_CONFIG}") whoami
+        env:
+          COPR_CLI_CONFIG: ${{ secrets.COPR_CLI_CONFIG }}
+
+      - name: Build in Copr
+        id: build
+        run: |
+          NEW_SHA="${{ needs.update-version.outputs.new_sha }}"
+          echo "Building commit ${NEW_SHA} in ${BUILD_REPO}"
+
+          copr-cli --config <(echo "${COPR_CLI_CONFIG}") buildscm \
+            --clone-url "https://github.com/${{ github.repository }}" \
+            --commit "${NEW_SHA}" \
+            --subdir "${BUILD_DIR}" \
+            --spec "${BUILD_PACKAGE}.spec" \
+            --type git \
+            --method rpkg \
+            "${BUILD_REPO}" | sed -n 's/^Created builds: /build_id=/p' | tr -d ',' >> "${GITHUB_OUTPUT}"
+        env:
+          COPR_CLI_CONFIG: ${{ secrets.COPR_CLI_CONFIG }}
