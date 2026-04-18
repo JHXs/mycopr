@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 %global _debugsource_packages 0
 %global forgeurl        https://github.com/InterceptSuite/ProxyBridge
-%global package_version 3.1.9
+%global package_version 3.2.0
 %global upstream_name   ProxyBridge
 
 Name:           proxybridge
