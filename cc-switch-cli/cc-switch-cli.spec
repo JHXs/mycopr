@@ -3,12 +3,14 @@
 
 Name:           cc-switch-cli
 Version:        %{package_version}
-Release:        2%{?dist}
+Release:        1%{?dist}
 Summary:        本项目是原版 CC-Switch 的 CLI 分支。🔄 WebDAV 同步功能与上游项目完全兼容。致谢： 原始架构和核心功能来自 https://github.com/farion1231/cc-switch
 
 License:        MIT
 URL:            https://github.com/SaladDay/cc-switch-cli
 Source0:        %{url}/releases/download/v%{version}/cc-switch-cli-v%{version}-linux-x64.tar.gz
+
+Conflicts:      cc-switch
 
 # 运行依赖
 Requires:       ca-certificates
@@ -26,20 +28,11 @@ Requires:       ca-certificates
 
 %install
 mkdir -p %{buildroot}%{_bindir}
-# Install under a distinct CLI name so it can coexist with the GUI package.
-# install -m 0755 %{_builddir}/%{name}-%{version}/cc-switch %{buildroot}%{_bindir}/
-install -m 0755 %{_builddir}/%{name}-%{version}/cc-switch %{buildroot}%{_bindir}/cc-switch-cli
-ln -sf cc-switch-cli %{buildroot}%{_bindir}/ccs
+install -m 0755 %{_builddir}/%{name}-%{version}/cc-switch %{buildroot}%{_bindir}/
 
 %files
-# %{_bindir}/cc-switch
-%{_bindir}/cc-switch-cli
-%{_bindir}/ccs
+%{_bindir}/cc-switch
 
 %changelog
-* Sun Apr 19 2026 hansel <user@example.com> - 5.3.3-2
-- Drop %%dir %%{_bindir} to avoid conflicting with the filesystem package
-
 * Sun Apr 19 2026 hansel <user@example.com> - 5.3.3-1
-- Rename installed CLI entry points to cc-switch-cli and ccs to avoid conflict with GUI package
 - Initial package for cc-switch-cli v5.3.3
