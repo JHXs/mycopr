@@ -28,7 +28,7 @@ jobs:
       needs_update: ${{ steps.check.outputs.needs_update }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Get latest commit from upstream
         id: upstream
@@ -78,10 +78,10 @@ jobs:
           CHANGELOG_ENTRY="* ${CHANGELOG_DATE} GitHub Actions <actions@github.com> - ${{ steps.upstream.outputs.commit_date }}git${{ steps.upstream.outputs.short_hash }}\n- Auto-update to upstream commit ${{ steps.upstream.outputs.short_hash }}: ${{ steps.upstream.outputs.commit_msg }}"
 
           awk -v entry="$CHANGELOG_ENTRY" '
-            /^%changelog/ { 
-              print entry; 
-              print ""; 
-            } 
+            /^%changelog/ {
+              print entry;
+              print "";
+            }
             { print }
           ' "${SPEC_FILE}" > "${SPEC_FILE}.new"
           mv "${SPEC_FILE}.new" "${SPEC_FILE}"
@@ -95,7 +95,7 @@ jobs:
       - name: Commit and push changes
         if: steps.check.outputs.needs_update == 'true'
         id: push_spec
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Update version"
           commit_user_name: "GitHub Action"

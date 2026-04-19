@@ -22,7 +22,7 @@ jobs:
       needs_update: ${{ steps.check.outputs.needs_update }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install tools
         run: sudo apt update && sudo apt install -y wget curl jq
@@ -57,7 +57,7 @@ jobs:
       - name: Commit and push changes
         if: steps.check.outputs.needs_update == 'true'
         id: push_spec
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Update version to ${{ steps.upstream.outputs.version }}"
           commit_user_name: "GitHub Action"

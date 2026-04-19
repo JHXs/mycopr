@@ -12,7 +12,7 @@ jobs:
       SPEC_FILE: 'ge-proton/ge-proton.spec'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install tools
         run: sudo apt update && sudo apt install -y wget curl
@@ -46,7 +46,7 @@ jobs:
 
       - name: Commit and push changes
         if: env.updated == 'true'
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Update version"
           commit_user_name: "GitHub Action"
@@ -84,4 +84,3 @@ jobs:
           BUILD_REPO: ikunji/mycopr
           BUILD_DIR: ge-proton
           BUILD_PACKAGE: ge-proton
-

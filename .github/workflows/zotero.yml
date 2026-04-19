@@ -17,7 +17,7 @@ jobs:
       SPEC_FILE: 'zotero/zotero.spec'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Extract version number
         id: extracted_version
@@ -38,7 +38,7 @@ jobs:
 
       - name: Commit and push changes
         if: env.updated == 'true'
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "Update version"
           commit_user_name: "GitHub Action"
