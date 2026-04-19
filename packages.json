@@ -1,0 +1,48 @@
+{
+  "packages": [
+    {
+      "name": "cc-switch-cli",
+      "enabled": true,
+      "subdir": "cc-switch-cli",
+      "spec": "cc-switch-cli.spec",
+      "build_repos": ["ikunji/mycopr", "ikunji/cc-switch-cli"],
+      "source_type": "github_release",
+      "github_repo": "SaladDay/cc-switch-cli",
+      "tag_prefix": "v",
+      "update_strategy": "package_version"
+    },
+    {
+      "name": "proxybridge",
+      "enabled": true,
+      "subdir": "proxybridge",
+      "spec": "proxybridge.spec",
+      "build_repos": ["ikunji/mycopr", "ikunji/proxybridge"],
+      "source_type": "github_release",
+      "github_repo": "InterceptSuite/ProxyBridge",
+      "tag_prefix": "v",
+      "update_strategy": "package_version"
+    },
+    {
+      "name": "reframe",
+      "enabled": true,
+      "subdir": "reframe",
+      "spec": "reframe.spec",
+      "build_repos": ["ikunji/mycopr", "ikunji/reframe"],
+      "source_type": "github_release",
+      "github_repo": "AlynxZhou/reframe",
+      "tag_prefix": "v",
+      "update_strategy": "package_version"
+    },
+    {
+      "name": "maple-mono-nf-cn-unhinted",
+      "enabled": true,
+      "subdir": "nerd-fonts",
+      "spec": "maple-mono-nf-cn-unhinted.spec",
+      "build_repos": ["ikunji/mycopr", "ikunji/nerd-fonts"],
+      "source_type": "github_release",
+      "github_repo": "subframe7536/maple-font",
+      "tag_prefix": "v",
+      "update_strategy": "package_version"
+    }
+  ]
+}

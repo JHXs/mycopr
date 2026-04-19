@@ -1,0 +1,151 @@
+name: update-copr
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: "Comma-separated package names. Leave empty to target all managed packages."
+        required: false
+        type: string
+      force_build:
+        description: "Build selected packages even when no upstream update is detected."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    outputs:
+      build_required: ${{ steps.detect.outputs.build_required }}
+      build_matrix_json: ${{ steps.detect.outputs.build_matrix_json }}
+      new_sha: ${{ steps.commit_sha.outputs.new_sha }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.0.0
+        with:
+          enable-cache: true
+          restore-cache: true
+          save-cache: true
+          prune-cache: true
+          cache-python: true
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
+            .python-version
+
+      - name: Install Python
+        run: uv python install
+
+      - name: Sync Python dependencies
+        run: uv sync --locked
+
+      - name: Detect upstream changes
+        id: detect
+        env:
+          PACKAGE_FILTER: ${{ github.event.inputs.packages }}
+          FORCE_BUILD: ${{ github.event.inputs.force_build }}
+        run: |
+          args=(
+            --packages-json packages.json
+            --report-json "$RUNNER_TEMP/upstream-report.json"
+            --github-output "$GITHUB_OUTPUT"
+          )
+
+          if [ -n "$PACKAGE_FILTER" ]; then
+            args+=(--packages "$PACKAGE_FILTER")
+          fi
+
+          if [ "$FORCE_BUILD" = "true" ]; then
+            args+=(--force-build)
+          fi
+
+          uv run python scripts/check_upstream.py "${args[@]}"
+
+      - name: Update changed spec files
+        id: update_specs
+        if: steps.detect.outputs.changed_any == 'true'
+        run: |
+          uv run python scripts/update_spec.py \
+            --report-json "$RUNNER_TEMP/upstream-report.json" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Commit managed spec updates
+        id: commit_changes
+        if: steps.update_specs.outputs.updated_any == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "chore(copr): update ${{ steps.update_specs.outputs.updated_names }}"
+          commit_user_name: "GitHub Actions"
+          file_pattern: ${{ steps.update_specs.outputs.updated_files }}
+
+      - name: Resolve commit SHA for builds
+        id: commit_sha
+        run: |
+          commit_sha="${{ steps.commit_changes.outputs.commit_hash }}"
+          if [ -z "$commit_sha" ]; then
+            commit_sha="${{ github.sha }}"
+          fi
+          echo "new_sha=$commit_sha" >> "$GITHUB_OUTPUT"
+          echo "Build commit: $commit_sha"
+
+  build:
+    needs: update
+    if: needs.update.outputs.build_required == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.update.outputs.build_matrix_json) }}
+    steps:
+      - name: Checkout repository at build commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.update.outputs.new_sha }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.0.0
+        with:
+          enable-cache: true
+          restore-cache: true
+          save-cache: true
+          prune-cache: true
+          cache-python: true
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
+            .python-version
+
+      - name: Install Python
+        run: uv python install
+
+      - name: Sync Python dependencies
+        run: uv sync --locked
+
+      - name: Write Copr config
+        run: |
+          cat > "$RUNNER_TEMP/copr.conf" <<'EOF'
+          ${{ secrets.COPR_CLI_CONFIG }}
+          EOF
+          chmod 600 "$RUNNER_TEMP/copr.conf"
+
+      - name: Verify Copr login
+        run: uv run copr-cli --config "$RUNNER_TEMP/copr.conf" whoami
+
+      - name: Build package in Copr
+        run: |
+          uv run python scripts/build_copr.py \
+            --packages-json packages.json \
+            --package "${{ matrix.name }}" \
+            --build-repo "${{ matrix.build_repo }}" \
+            --commit "${{ needs.update.outputs.new_sha }}" \
+            --clone-url "https://github.com/${{ github.repository }}" \
+            --copr-config "$RUNNER_TEMP/copr.conf"

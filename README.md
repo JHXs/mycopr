@@ -26,3 +26,7 @@
 ## CI/CD 规划
 
 - [CI-CD-REFACTOR.md](docs/CI-CD-REFACTOR.md)：统一收敛 GitHub Actions 与 Copr 构建流程的改造目标和实施方案。
+
+## Python 环境
+
+仓库根目录使用 `uv` 管理 CI/CD 脚本依赖，见 [pyproject.toml](/home/hansel/Documents/ITProject/copr/pyproject.toml:1) 和 [uv.lock](/home/hansel/Documents/ITProject/copr/uv.lock:1)。
