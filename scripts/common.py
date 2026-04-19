@@ -47,7 +47,7 @@ def fetch_upstream_data(config):
     pkg_type = config["type"]
     if pkg_type in ["github_release", "ge_proton"]:
         return get_github_release(config["repo"])
-    elif pkg_type in ["github_commit", "github_commit_complex"]:
+    elif pkg_type == "github_commit":
         return get_github_commit(config["repo"])
     elif pkg_type == "aur":
         return get_aur_version(config["repo"])
@@ -60,17 +60,15 @@ def is_update_needed(config, data):
     if not spec_path.exists(): return True
     content = spec_path.read_text()
 
-    if config["type"] == "github_commit_complex":
-        return data["sha"] not in content or data["short"] not in content
-    
     # Default transforms logic
     default_transforms = {"package_version": "strip_v"}
-    if "commit" in config["type"]:
+    if config["type"] == "github_commit":
         default_transforms = {"commit": "raw"}
     
     transforms = config.get("transforms", default_transforms)
     for var_name, rule in transforms.items():
-        val = data.get("version") or data.get("sha")
+        # Get value from data: version, sha, short, or date
+        val = data.get(var_name) or data.get("version") or data.get("sha")
         val = apply_transform(val, rule)
         if re.search(rf'%global\s+{var_name}\s+{re.escape(val)}', content) is None:
             return True

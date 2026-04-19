@@ -4,12 +4,6 @@ repo = "SaladDay/cc-switch-cli"
 spec = "cc-switch-cli/cc-switch-cli.spec"
 copr_repos = ["ikunji/mycopr", "ikunji/cc-switch-cli"]
 
-[cto2api]
-type = "github_commit"
-repo = "wyeeeee/cto2api"
-spec = "cto2api/cto2api.spec"
-copr_repos = ["ikunji/mycopr", "ikunji/cto2api"]
-
 [maple-mono]
 type = "github_release"
 repo = "subframe7536/maple-font"
@@ -28,12 +22,6 @@ repo = "AlynxZhou/reframe"
 spec = "reframe/reframe.spec"
 copr_repos = ["ikunji/mycopr", "ikunji/reframe"]
 
-[krunner-pinyin-search]
-type = "github_commit_complex"
-repo = "AOSC-Dev/krunner-pinyin-search"
-spec = "krunner-pinyin-search/krunner-pinyin-search.spec"
-copr_repos = ["ikunji/mycopr", "ikunji/krunner-pinyin-search"]
-
 [um-cli]
 type = "gitea_release"
 repo = "um/cli"
@@ -47,6 +35,20 @@ repo = "GloriousEggroll/proton-ge-custom"
 spec = "ge-proton/ge-proton.spec"
 copr_repos = ["ikunji/mycopr"]
 transforms = { package_version = "strip_v, strip:GE-Proton, dot", proton_ver = "strip_v, strip:GE-Proton" }
+
+[cto2api]
+type = "github_commit"
+repo = "wyeeeee/cto2api"
+spec = "cto2api/cto2api.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/cto2api"]
+
+[krunner-pinyin-search]
+type = "github_commit"
+repo = "AOSC-Dev/krunner-pinyin-search"
+spec = "krunner-pinyin-search/krunner-pinyin-search.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/krunner-pinyin-search"]
+update_changelog = true
+transforms = { git_commit = "raw", git_short = "raw", commit_date = "raw" }
 
 [zotero]
 type = "aur"
