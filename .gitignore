@@ -2,6 +2,7 @@ rpmbuild/
 fedpkgs/
 packages
 SOURCES/
+__pycache__/
 **pkgs/
 **.src.rpm
 **.rpm

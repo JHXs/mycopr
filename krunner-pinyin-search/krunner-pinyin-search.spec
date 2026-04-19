@@ -3,8 +3,8 @@
 
 %global git_url https://github.com/AOSC-Dev/krunner-pinyin-search
 %global git_commit 87598886467701cd8a97727149eedf45b9e1d60e
-%global git_short 87598886467701cd8a97727149eedf45b9e1d60e
-%global commit_date 87598886467701cd8a97727149eedf45b9e1d60e
+%global git_short 8759888
+%global commit_date 20250923
 
 Name:           krunner-pinyin-search
 Version:        %{git_short}

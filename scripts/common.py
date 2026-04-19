@@ -22,10 +22,16 @@ def get_github_commit(repo):
     resp = httpx.get(url)
     resp.raise_for_status()
     data = resp.json()[0]
+    sha = data["sha"]
+    short = sha[:7]
+    date = data["commit"]["author"]["date"].split('T')[0].replace('-', '')
     return {
-        "sha": data["sha"],
-        "short": data["sha"][:7],
-        "date": data["commit"]["author"]["date"].split('T')[0].replace('-', ''),
+        "sha": sha,
+        "git_commit": sha,
+        "short": short,
+        "git_short": short,
+        "date": date,
+        "commit_date": date,
         "msg": data["commit"]["message"].split('\n')[0][:60]
     }
 
@@ -67,8 +73,14 @@ def is_update_needed(config, data):
     
     transforms = config.get("transforms", default_transforms)
     for var_name, rule in transforms.items():
-        # Get value from data: version, sha, short, or date
-        val = data.get(var_name) or data.get("version") or data.get("sha")
+        # Get value from data: try var_name directly, then fallback to version/sha/short/date
+        val = data.get(var_name)
+        if val is None:
+            if "short" in var_name: val = data.get("short")
+            elif "date" in var_name: val = data.get("date")
+            elif "commit" in var_name or "sha" in var_name: val = data.get("sha")
+            else: val = data.get("version") or data.get("sha")
+        
         val = apply_transform(val, rule)
         if re.search(rf'%global\s+{var_name}\s+{re.escape(val)}', content) is None:
             return True

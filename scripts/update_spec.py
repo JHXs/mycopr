@@ -22,10 +22,16 @@ def update_spec(config, data):
     
     transforms = config.get("transforms", default_transforms)
     for var_name, rule in transforms.items():
-        # 尝试从 data 中按优先级获取值
-        val = data.get(var_name) or data.get("version") or data.get("sha")
+        # Get value from data: try var_name directly, then fallback to version/sha/short/date
+        val = data.get(var_name)
+        if val is None:
+            if "short" in var_name: val = data.get("short")
+            elif "date" in var_name: val = data.get("date")
+            elif "commit" in var_name or "sha" in var_name: val = data.get("sha")
+            else: val = data.get("version") or data.get("sha")
+            
         val = apply_transform(val, rule)
-        new_content = re.sub(rf'(%global {var_name}\s+)\S+', rf'\g<1>{val}', new_content)
+        new_content = re.sub(rf'(%global\s+{var_name}\s+)\S+', rf'\g<1>{val}', new_content)
 
     # 2. 自动生成 Changelog (如果配置了 update_changelog)
     if config.get("update_changelog") and "%changelog" in new_content:
