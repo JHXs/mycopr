@@ -1,11 +1,13 @@
 [project]
-name = "copr"
+name = "update-copr"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "copr>=2.5",
     "copr-cli>=2.4",
     "httpx>=0.28.1",
+    "requests>=2.33.1",
     "tomli>=2.4.1",
 ]

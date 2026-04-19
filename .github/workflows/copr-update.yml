@@ -78,10 +78,10 @@ jobs:
         if: steps.updater.outputs.updated == 'true'
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
-          commit_message: "Update ${{ matrix.package }} to ${{ steps.updater.outputs.version }}"
+          commit_message: "Update ${{ matrix.package.name }} to ${{ steps.updater.outputs.version }}"
           file_pattern: "${{ steps.updater.outputs.spec_file }}"
 
-      - name: Build in Copr
+      - name: Trigger Copr Build
         if: steps.updater.outputs.updated == 'true' || github.event.inputs.force_build == 'true'
         env:
           COPR_CLI_CONFIG: ${{ secrets.COPR_CLI_CONFIG }}
@@ -93,11 +93,11 @@ jobs:
 
           IFS=',' read -ra ADDR <<< "$REPOS"
           for REPO in "${ADDR[@]}"; do
-            echo "🚀 Building ${{ matrix.package }} in $REPO..."
+            echo "🚀 Building ${{ matrix.package.name }} in $REPO..."
             SUBDIR=$(dirname "$SPEC_FILE")
             SPEC_NAME=$(basename "$SPEC_FILE")
 
-            copr-cli --config <(echo "${COPR_CLI_CONFIG}") buildscm \
+            uv run copr-cli --config <(echo "${COPR_CLI_CONFIG}") buildscm \
               --clone-url "https://github.com/${{ github.repository }}" \
               --commit "${NEW_SHA}" \
               --subdir "${SUBDIR}" \
