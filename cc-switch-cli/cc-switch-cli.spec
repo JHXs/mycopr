@@ -27,10 +27,12 @@ Requires:       ca-certificates
 %install
 mkdir -p %{buildroot}%{_bindir}
 # Install under a distinct CLI name so it can coexist with the GUI package.
+# install -m 0755 %{_builddir}/%{name}-%{version}/cc-switch %{buildroot}%{_bindir}/
 install -m 0755 %{_builddir}/%{name}-%{version}/cc-switch %{buildroot}%{_bindir}/cc-switch-cli
 ln -sf cc-switch-cli %{buildroot}%{_bindir}/ccs
 
 %files
+# %{_bindir}/cc-switch
 %{_bindir}/cc-switch-cli
 %{_bindir}/ccs
 
