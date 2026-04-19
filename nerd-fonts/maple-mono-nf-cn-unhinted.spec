@@ -1,4 +1,4 @@
-%global package_version 7.9
+%global package_version 7.8
 %{!?_fontbasedir:%global _fontbasedir %{_datadir}/fonts}
 
 Name:           maple-mono-nf-cn-unhinted
@@ -16,7 +16,7 @@ BuildRequires:  fonts-srpm-macros
 Requires:       fontconfig
 
 %description
-Open source monospace font with round corner, ligatures and Nerd-Font icons 
+Open source monospace font with round corner, ligatures and Nerd-Font icons
 for IDE and terminal, featuring fine-grained customization options.
 This package provides the CN (Chinese) variant, unhinted, with Nerd Font patches.
 
