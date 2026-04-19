@@ -12,5 +12,6 @@ SOURCES/
 **.log
 .codex
 test/
+tests/
 .venv
 __pycache__/

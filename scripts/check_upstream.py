@@ -7,9 +7,12 @@ import json
 import pathlib
 import re
 import sys
+import urllib.parse
 import urllib.request
 
 PACKAGE_VERSION_RE = re.compile(r"^%global\s+package_version\s+(\S+)\s*$")
+COMMIT_RE = re.compile(r"^%global\s+commit\s+(\S+)\s*$")
+PKGBUILD_VERSION_RE = re.compile(r"^pkgver=(.+)$")
 DEFAULT_HTTP_TIMEOUT = 30
 DEFAULT_USER_AGENT = "copr-ci-check-upstream/1.0"
 
@@ -58,28 +61,49 @@ def filter_packages(packages: list[dict], package_filter: str | None) -> list[di
     return [index[name] for name in requested]
 
 
-def read_current_version(spec_path: pathlib.Path, strategy: str) -> str:
-    if strategy != "package_version":
-        raise RuntimeError(f"unsupported update_strategy for phase one: {strategy}")
-
-    for line in spec_path.read_text(encoding="utf-8").splitlines():
-        match = PACKAGE_VERSION_RE.match(line)
-        if match:
-            return match.group(1)
-    raise RuntimeError(f"could not find %global package_version in {spec_path}")
-
-
-def fetch_latest_github_release(github_repo: str, tag_prefix: str) -> str:
-    url = f"https://api.github.com/repos/{github_repo}/releases/latest"
+def fetch_json(url: str) -> object:
     request = urllib.request.Request(
         url,
         headers={
-            "Accept": "application/vnd.github+json",
+            "Accept": "application/json",
             "User-Agent": DEFAULT_USER_AGENT,
         },
     )
     with urllib.request.urlopen(request, timeout=DEFAULT_HTTP_TIMEOUT) as response:
-        payload = json.load(response)
+        return json.load(response)
+
+
+def fetch_text(url: str) -> str:
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": DEFAULT_USER_AGENT,
+        },
+    )
+    with urllib.request.urlopen(request, timeout=DEFAULT_HTTP_TIMEOUT) as response:
+        return response.read().decode("utf-8")
+
+
+def read_current_version(spec_path: pathlib.Path, strategy: str) -> str:
+    pattern_map = {
+        "package_version": (PACKAGE_VERSION_RE, "%global package_version"),
+        "commit": (COMMIT_RE, "%global commit"),
+    }
+    try:
+        pattern, label = pattern_map[strategy]
+    except KeyError as exc:
+        raise RuntimeError(f"unsupported update_strategy: {strategy}") from exc
+
+    for line in spec_path.read_text(encoding="utf-8").splitlines():
+        match = pattern.match(line)
+        if match:
+            return match.group(1)
+    raise RuntimeError(f"could not find {label} in {spec_path}")
+
+
+def fetch_latest_github_release(github_repo: str, tag_prefix: str) -> str:
+    url = f"https://api.github.com/repos/{github_repo}/releases/latest"
+    payload = fetch_json(url)
 
     try:
         tag_name = payload["tag_name"]
@@ -91,15 +115,92 @@ def fetch_latest_github_release(github_repo: str, tag_prefix: str) -> str:
     return tag_name
 
 
+def fetch_latest_github_commit(github_repo: str, github_branch: str | None) -> str:
+    params = {"per_page": 1}
+    if github_branch:
+        params["sha"] = github_branch
+    query = urllib.parse.urlencode(params)
+    url = f"https://api.github.com/repos/{github_repo}/commits?{query}"
+    payload = fetch_json(url)
+
+    if not isinstance(payload, list) or not payload:
+        raise RuntimeError(f"unexpected commit response for {github_repo}")
+
+    try:
+        return payload[0]["sha"]
+    except KeyError as exc:
+        raise RuntimeError(f"missing sha in GitHub commit response for {github_repo}") from exc
+
+
+def fetch_aur_pkgbuild_version(aur_package: str) -> str:
+    quoted_package = urllib.parse.quote(aur_package, safe="")
+    url = f"https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h={quoted_package}"
+    payload = fetch_text(url)
+
+    for line in payload.splitlines():
+        match = PKGBUILD_VERSION_RE.match(line.strip())
+        if match:
+            return match.group(1).strip().strip("'\"")
+    raise RuntimeError(f"missing pkgver in AUR PKGBUILD for {aur_package}")
+
+
+def fetch_latest_gitea_release(gitea_base_url: str, gitea_repo: str, tag_prefix: str) -> str:
+    base_url = gitea_base_url.rstrip("/")
+    repo = gitea_repo.strip("/")
+    url = f"{base_url}/api/v1/repos/{repo}/releases"
+    payload = fetch_json(url)
+
+    if not isinstance(payload, list):
+        raise RuntimeError(f"unexpected Gitea release response for {gitea_repo}")
+
+    stable_release = next((release for release in payload if not release.get("prerelease", False)), None)
+    if stable_release is None:
+        raise RuntimeError(f"no stable release found for {gitea_repo}")
+
+    try:
+        tag_name = stable_release["tag_name"]
+    except KeyError as exc:
+        raise RuntimeError(f"missing tag_name in Gitea release response for {gitea_repo}") from exc
+
+    if tag_prefix and tag_name.startswith(tag_prefix):
+        return tag_name[len(tag_prefix) :]
+    return tag_name
+
+
 def fetch_latest_version(package: dict) -> str:
     source_type = package.get("source_type")
-    if source_type != "github_release":
-        raise RuntimeError(f"unsupported source_type for phase one: {source_type}")
+    if source_type == "github_release":
+        github_repo = package.get("github_repo")
+        if not github_repo:
+            raise RuntimeError(f"package {package['name']} is missing github_repo")
+        return fetch_latest_github_release(github_repo, package.get("tag_prefix", ""))
 
-    github_repo = package.get("github_repo")
-    if not github_repo:
-        raise RuntimeError(f"package {package['name']} is missing github_repo")
-    return fetch_latest_github_release(github_repo, package.get("tag_prefix", ""))
+    if source_type == "aur_pkgbuild":
+        aur_package = package.get("aur_package")
+        if not aur_package:
+            raise RuntimeError(f"package {package['name']} is missing aur_package")
+        return fetch_aur_pkgbuild_version(aur_package)
+
+    if source_type == "gitea_release":
+        gitea_base_url = package.get("gitea_base_url")
+        gitea_repo = package.get("gitea_repo")
+        if not gitea_base_url or not gitea_repo:
+            raise RuntimeError(
+                f"package {package['name']} is missing gitea_base_url or gitea_repo"
+            )
+        return fetch_latest_gitea_release(
+            gitea_base_url,
+            gitea_repo,
+            package.get("tag_prefix", ""),
+        )
+
+    if source_type == "git_commit":
+        github_repo = package.get("github_repo")
+        if not github_repo:
+            raise RuntimeError(f"package {package['name']} is missing github_repo")
+        return fetch_latest_github_commit(github_repo, package.get("github_branch"))
+
+    raise RuntimeError(f"unsupported source_type: {source_type}")
 
 
 def build_matrix(packages: list[dict]) -> list[dict]:

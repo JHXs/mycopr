@@ -10,6 +10,7 @@ import re
 import sys
 
 PACKAGE_VERSION_RE = re.compile(r"^(%global\s+package_version\s+)(\S+)(\s*)$")
+COMMIT_RE = re.compile(r"^(%global\s+commit\s+)(\S+)(\s*)$")
 RELEASE_RE = re.compile(r"^(Release:\s+)(\S+)(\s*)$")
 CHANGELOG_HEADER = "%changelog"
 AUTOCHANGELOG_MARKER = "%autochangelog"
@@ -53,13 +54,13 @@ def changelog_date(now: dt.datetime) -> str:
     )
 
 
-def add_changelog_entry(lines: list[str], version: str) -> list[str]:
+def add_changelog_entry(lines: list[str], version: str, message: str) -> list[str]:
     if AUTOCHANGELOG_MARKER in lines:
         return lines
 
     entry = [
         f"* {changelog_date(dt.datetime.now(dt.UTC))} {CHANGELOG_AUTHOR} - {version}-1",
-        f"- Update to {version}",
+        f"- {message}",
         "",
     ]
 
@@ -73,18 +74,30 @@ def add_changelog_entry(lines: list[str], version: str) -> list[str]:
     return trimmed + ["", CHANGELOG_HEADER] + entry
 
 
-def update_package_version(lines: list[str], new_version: str) -> tuple[list[str], bool]:
+def short_commit(commit: str) -> str:
+    return commit[:7]
+
+
+def update_version_macro(
+    lines: list[str],
+    *,
+    pattern: re.Pattern[str],
+    label: str,
+    new_value: str,
+    changelog_version: str,
+    changelog_message: str,
+) -> tuple[list[str], bool]:
     updated = []
     changed = False
-    version_updated = False
+    macro_updated = False
 
     for line in lines:
-        match = PACKAGE_VERSION_RE.match(line)
+        match = pattern.match(line)
         if match:
-            version_updated = True
-            current_version = match.group(2)
-            if current_version != new_version:
-                updated.append(f"{match.group(1)}{new_version}{match.group(3)}")
+            macro_updated = True
+            current_value = match.group(2)
+            if current_value != new_value:
+                updated.append(f"{match.group(1)}{new_value}{match.group(3)}")
                 changed = True
             else:
                 updated.append(line)
@@ -102,20 +115,45 @@ def update_package_version(lines: list[str], new_version: str) -> tuple[list[str
 
         updated.append(line)
 
-    if not version_updated:
-        raise RuntimeError("missing %global package_version")
+    if not macro_updated:
+        raise RuntimeError(f"missing {label}")
 
     if changed:
-        updated = add_changelog_entry(updated, new_version)
+        updated = add_changelog_entry(updated, changelog_version, changelog_message)
     return updated, changed
+
+
+def update_package_version(lines: list[str], new_version: str) -> tuple[list[str], bool]:
+    return update_version_macro(
+        lines,
+        pattern=PACKAGE_VERSION_RE,
+        label="%global package_version",
+        new_value=new_version,
+        changelog_version=new_version,
+        changelog_message=f"Update to {new_version}",
+    )
+
+
+def update_commit(lines: list[str], new_commit: str) -> tuple[list[str], bool]:
+    return update_version_macro(
+        lines,
+        pattern=COMMIT_RE,
+        label="%global commit",
+        new_value=new_commit,
+        changelog_version=short_commit(new_commit),
+        changelog_message=f"Update to commit {new_commit}",
+    )
 
 
 def update_spec_file(spec_path: pathlib.Path, strategy: str, latest_version: str) -> bool:
     lines = spec_path.read_text(encoding="utf-8").splitlines()
-    if strategy != "package_version":
-        raise RuntimeError(f"unsupported update_strategy for phase one: {strategy}")
+    if strategy == "package_version":
+        updated_lines, changed = update_package_version(lines, latest_version)
+    elif strategy == "commit":
+        updated_lines, changed = update_commit(lines, latest_version)
+    else:
+        raise RuntimeError(f"unsupported update_strategy: {strategy}")
 
-    updated_lines, changed = update_package_version(lines, latest_version)
     if changed:
         spec_path.write_text("\n".join(updated_lines) + "\n", encoding="utf-8")
     return changed

@@ -43,6 +43,39 @@
       "github_repo": "subframe7536/maple-font",
       "tag_prefix": "v",
       "update_strategy": "package_version"
+    },
+    {
+      "name": "zotero",
+      "enabled": true,
+      "subdir": "zotero",
+      "spec": "zotero.spec",
+      "build_repos": ["ikunji/mycopr"],
+      "source_type": "aur_pkgbuild",
+      "aur_package": "zotero-bin",
+      "update_strategy": "package_version"
+    },
+    {
+      "name": "um-cli",
+      "enabled": true,
+      "subdir": "um-cli-copr",
+      "spec": "um-cli.spec",
+      "build_repos": ["ikunji/mycopr", "ikunji/um-cli"],
+      "source_type": "gitea_release",
+      "gitea_base_url": "https://git.um-react.app",
+      "gitea_repo": "um/cli",
+      "tag_prefix": "v",
+      "update_strategy": "package_version"
+    },
+    {
+      "name": "cto2api",
+      "enabled": true,
+      "subdir": "cto2api",
+      "spec": "cto2api.spec",
+      "build_repos": ["ikunji/mycopr", "ikunji/cto2api"],
+      "source_type": "git_commit",
+      "github_repo": "wyeeeee/cto2api",
+      "github_branch": "main",
+      "update_strategy": "commit"
     }
   ]
 }
