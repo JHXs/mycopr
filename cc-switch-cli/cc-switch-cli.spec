@@ -26,12 +26,16 @@ Requires:       ca-certificates
 
 %install
 mkdir -p %{buildroot}%{_bindir}
-install -m 0755 %{_builddir}/%{name}-%{version}/cc-switch %{buildroot}%{_bindir}/
+# Install under a distinct CLI name so it can coexist with the GUI package.
+install -m 0755 %{_builddir}/%{name}-%{version}/cc-switch %{buildroot}%{_bindir}/cc-switch-cli
+ln -sf cc-switch-cli %{buildroot}%{_bindir}/ccs
 
 %files
 %dir %{_bindir}
-%{_bindir}/cc-switch
+%{_bindir}/cc-switch-cli
+%{_bindir}/ccs
 
 %changelog
-* Sun Apr 19 2026 hansel <user@example.com> - 5.3.2
-- Initial package for cc-switch-cli v5.3.2
+* Sun Apr 19 2026 hansel <user@example.com> - 5.3.3-1
+- Rename installed CLI entry points to cc-switch-cli and ccs to avoid conflict with GUI package
+- Initial package for cc-switch-cli v5.3.3
