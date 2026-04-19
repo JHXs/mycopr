@@ -22,3 +22,7 @@
 ## 备注
 
 这个仓库主要用于维护打包文件和构建说明，不包含上游应用的完整源码。
+
+## CI/CD 规划
+
+- [CI-CD-REFACTOR.md](docs/CI-CD-REFACTOR.md)：统一收敛 GitHub Actions 与 Copr 构建流程的改造目标和实施方案。
