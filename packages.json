@@ -76,6 +76,36 @@
       "github_repo": "wyeeeee/cto2api",
       "github_branch": "main",
       "update_strategy": "commit"
+    },
+    {
+      "name": "krunner-pinyin-search",
+      "enabled": true,
+      "subdir": "krunner-pinyin-search",
+      "spec": "krunner-pinyin-search.spec",
+      "build_repos": ["ikunji/mycopr", "ikunji/krunner-pinyin-search"],
+      "source_type": "git_commit",
+      "github_repo": "AOSC-Dev/krunner-pinyin-search",
+      "github_branch": "master",
+      "update_strategy": "git_snapshot"
+    },
+    {
+      "name": "ge-proton",
+      "enabled": true,
+      "subdir": "ge-proton",
+      "spec": "ge-proton.spec",
+      "build_repos": ["ikunji/mycopr"],
+      "source_type": "github_release",
+      "github_repo": "GloriousEggroll/proton-ge-custom",
+      "tag_prefix": "GE-Proton",
+      "update_strategy": "package_version",
+      "version_replace": {
+        "from": "-",
+        "to": "."
+      },
+      "spec_fields": {
+        "package_version": "package_version",
+        "proton_ver": "raw_version"
+      }
     }
   ]
 }

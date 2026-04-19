@@ -9,8 +9,6 @@ import pathlib
 import re
 import sys
 
-PACKAGE_VERSION_RE = re.compile(r"^(%global\s+package_version\s+)(\S+)(\s*)$")
-COMMIT_RE = re.compile(r"^(%global\s+commit\s+)(\S+)(\s*)$")
 RELEASE_RE = re.compile(r"^(Release:\s+)(\S+)(\s*)$")
 CHANGELOG_HEADER = "%changelog"
 AUTOCHANGELOG_MARKER = "%autochangelog"
@@ -78,24 +76,38 @@ def short_commit(commit: str) -> str:
     return commit[:7]
 
 
-def update_version_macro(
+def package_version_fields(package: dict) -> dict[str, str]:
+    return package.get("spec_fields", {"package_version": "package_version"})
+
+
+def update_macros(
     lines: list[str],
     *,
-    pattern: re.Pattern[str],
-    label: str,
-    new_value: str,
+    replacements: dict[str, str],
+    release_value: str | None,
     changelog_version: str,
     changelog_message: str,
 ) -> tuple[list[str], bool]:
     updated = []
     changed = False
-    macro_updated = False
+    found_macros = set()
+    patterns = {
+        name: re.compile(rf"^(%global\s+{re.escape(name)}\s+)(\S+)(\s*)$")
+        for name in replacements
+    }
 
     for line in lines:
-        match = pattern.match(line)
-        if match:
-            macro_updated = True
+        macro_match = None
+        for name, pattern in patterns.items():
+            match = pattern.match(line)
+            if match:
+                macro_match = (name, match)
+                break
+        if macro_match is not None:
+            name, match = macro_match
+            found_macros.add(name)
             current_value = match.group(2)
+            new_value = replacements[name]
             if current_value != new_value:
                 updated.append(f"{match.group(1)}{new_value}{match.group(3)}")
                 changed = True
@@ -105,9 +117,8 @@ def update_version_macro(
 
         match = RELEASE_RE.match(line)
         if match:
-            desired_release = "1%{?dist}"
-            if match.group(2) != desired_release:
-                updated.append(f"{match.group(1)}{desired_release}{match.group(3)}")
+            if release_value is not None and match.group(2) != release_value:
+                updated.append(f"{match.group(1)}{release_value}{match.group(3)}")
                 changed = True
             else:
                 updated.append(line)
@@ -115,42 +126,72 @@ def update_version_macro(
 
         updated.append(line)
 
-    if not macro_updated:
-        raise RuntimeError(f"missing {label}")
+    missing = sorted(set(replacements) - found_macros)
+    if missing:
+        raise RuntimeError(f"missing %global: {', '.join(missing)}")
 
     if changed:
         updated = add_changelog_entry(updated, changelog_version, changelog_message)
     return updated, changed
 
 
-def update_package_version(lines: list[str], new_version: str) -> tuple[list[str], bool]:
-    return update_version_macro(
+def update_package_version(
+    lines: list[str],
+    package: dict,
+    upstream_state: dict[str, str],
+) -> tuple[list[str], bool]:
+    version = upstream_state["package_version"]
+    return update_macros(
         lines,
-        pattern=PACKAGE_VERSION_RE,
-        label="%global package_version",
-        new_value=new_version,
-        changelog_version=new_version,
-        changelog_message=f"Update to {new_version}",
+        replacements={
+            macro_name: upstream_state[state_key]
+            for macro_name, state_key in package_version_fields(package).items()
+        },
+        release_value="1%{?dist}",
+        changelog_version=version,
+        changelog_message=f"Update to {version}",
     )
 
 
-def update_commit(lines: list[str], new_commit: str) -> tuple[list[str], bool]:
-    return update_version_macro(
+def update_commit(lines: list[str], upstream_state: dict[str, str]) -> tuple[list[str], bool]:
+    commit = upstream_state["commit"]
+    return update_macros(
         lines,
-        pattern=COMMIT_RE,
-        label="%global commit",
-        new_value=new_commit,
-        changelog_version=short_commit(new_commit),
-        changelog_message=f"Update to commit {new_commit}",
+        replacements={"commit": commit},
+        release_value="1%{?dist}",
+        changelog_version=short_commit(commit),
+        changelog_message=f"Update to commit {commit}",
     )
 
 
-def update_spec_file(spec_path: pathlib.Path, strategy: str, latest_version: str) -> bool:
+def update_git_snapshot(lines: list[str], upstream_state: dict[str, str]) -> tuple[list[str], bool]:
+    snapshot_version = f"{upstream_state['commit_date']}git{upstream_state['git_short']}"
+    message = (
+        f"Auto-update to upstream commit {upstream_state['git_short']}: "
+        f"{upstream_state['commit_msg']}"
+    )
+    return update_macros(
+        lines,
+        replacements={
+            "git_commit": upstream_state["git_commit"],
+            "git_short": upstream_state["git_short"],
+            "commit_date": upstream_state["commit_date"],
+        },
+        release_value=None,
+        changelog_version=snapshot_version,
+        changelog_message=message,
+    )
+
+
+def update_spec_file(spec_path: pathlib.Path, package: dict, upstream_state: dict[str, str]) -> bool:
     lines = spec_path.read_text(encoding="utf-8").splitlines()
+    strategy = package["update_strategy"]
     if strategy == "package_version":
-        updated_lines, changed = update_package_version(lines, latest_version)
+        updated_lines, changed = update_package_version(lines, package, upstream_state)
     elif strategy == "commit":
-        updated_lines, changed = update_commit(lines, latest_version)
+        updated_lines, changed = update_commit(lines, upstream_state)
+    elif strategy == "git_snapshot":
+        updated_lines, changed = update_git_snapshot(lines, upstream_state)
     else:
         raise RuntimeError(f"unsupported update_strategy: {strategy}")
 
@@ -170,7 +211,7 @@ def main() -> int:
         if not package.get("changed"):
             continue
         spec_path = repo_root / package["spec_path"]
-        if update_spec_file(spec_path, package["update_strategy"], package["latest_version"]):
+        if update_spec_file(spec_path, package, package["upstream_state"]):
             updated_files.append(package["spec_path"])
             updated_packages.append(package["name"])
 

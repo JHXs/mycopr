@@ -10,11 +10,20 @@ import sys
 import urllib.parse
 import urllib.request
 
-PACKAGE_VERSION_RE = re.compile(r"^%global\s+package_version\s+(\S+)\s*$")
-COMMIT_RE = re.compile(r"^%global\s+commit\s+(\S+)\s*$")
 PKGBUILD_VERSION_RE = re.compile(r"^pkgver=(.+)$")
 DEFAULT_HTTP_TIMEOUT = 30
 DEFAULT_USER_AGENT = "copr-ci-check-upstream/1.0"
+PACKAGE_VERSION_FIELDS = {"package_version": "package_version"}
+STRATEGY_STATE_FIELDS = {
+    "commit": {"commit": "commit"},
+    "git_snapshot": {
+        "git_commit": "git_commit",
+        "git_short": "git_short",
+        "commit_date": "commit_date",
+    },
+}
+SUPPORTED_SOURCE_TYPES = {"github_release", "aur_pkgbuild", "gitea_release", "git_commit"}
+SUPPORTED_UPDATE_STRATEGIES = {"package_version", *STRATEGY_STATE_FIELDS}
 
 
 def parse_args() -> argparse.Namespace:
@@ -43,6 +52,7 @@ def load_packages(packages_json: pathlib.Path) -> list[dict]:
         packages.append(package)
     if not packages:
         raise RuntimeError(f"no enabled packages found in {packages_json}")
+    validate_packages(packages)
     return packages
 
 
@@ -84,21 +94,131 @@ def fetch_text(url: str) -> str:
         return response.read().decode("utf-8")
 
 
-def read_current_version(spec_path: pathlib.Path, strategy: str) -> str:
-    pattern_map = {
-        "package_version": (PACKAGE_VERSION_RE, "%global package_version"),
-        "commit": (COMMIT_RE, "%global commit"),
-    }
-    try:
-        pattern, label = pattern_map[strategy]
-    except KeyError as exc:
-        raise RuntimeError(f"unsupported update_strategy: {strategy}") from exc
-
-    for line in spec_path.read_text(encoding="utf-8").splitlines():
+def read_macro(spec_lines: list[str], macro_name: str) -> str:
+    pattern = re.compile(rf"^%global\s+{re.escape(macro_name)}\s+(\S+)\s*$")
+    for line in spec_lines:
         match = pattern.match(line)
         if match:
             return match.group(1)
-    raise RuntimeError(f"could not find {label} in {spec_path}")
+    raise RuntimeError(f"could not find %global {macro_name}")
+
+
+def package_version_fields(package: dict) -> dict[str, str]:
+    fields = package.get("spec_fields", PACKAGE_VERSION_FIELDS)
+    if not isinstance(fields, dict) or not fields:
+        raise RuntimeError(f"package {package['name']} has invalid spec_fields")
+
+    normalized = {}
+    for macro_name, state_key in fields.items():
+        if not isinstance(macro_name, str) or not macro_name:
+            raise RuntimeError(f"package {package['name']} has invalid spec_fields macro name")
+        if not isinstance(state_key, str) or not state_key:
+            raise RuntimeError(f"package {package['name']} has invalid spec_fields state key")
+        normalized[macro_name] = state_key
+    return normalized
+
+
+def package_version_rule(package: dict) -> dict | None:
+    rule = package.get("version_replace")
+    if rule is None:
+        return None
+    if not isinstance(rule, dict):
+        raise RuntimeError(f"package {package['name']} has invalid version_replace")
+    if set(rule) != {"from", "to"}:
+        raise RuntimeError(f"package {package['name']} has invalid version_replace keys")
+    if not isinstance(rule["from"], str) or not isinstance(rule["to"], str):
+        raise RuntimeError(f"package {package['name']} has invalid version_replace values")
+    return rule
+
+
+def strategy_state_fields(package: dict) -> dict[str, str]:
+    strategy = package["update_strategy"]
+    if strategy == "package_version":
+        return package_version_fields(package)
+    try:
+        return STRATEGY_STATE_FIELDS[strategy]
+    except KeyError as exc:
+        raise RuntimeError(f"unsupported update_strategy: {strategy}") from exc
+
+
+def validate_package(package: dict) -> None:
+    required_fields = ["name", "subdir", "spec", "build_repos", "source_type", "update_strategy"]
+    missing = [field for field in required_fields if field not in package]
+    if missing:
+        raise RuntimeError(
+            f"package {package.get('name', '<unknown>')} is missing required fields: {', '.join(missing)}"
+        )
+
+    if package["source_type"] not in SUPPORTED_SOURCE_TYPES:
+        raise RuntimeError(
+            f"package {package['name']} has unsupported source_type: {package['source_type']}"
+        )
+    if package["update_strategy"] not in SUPPORTED_UPDATE_STRATEGIES:
+        raise RuntimeError(
+            f"package {package['name']} has unsupported update_strategy: {package['update_strategy']}"
+        )
+    if not isinstance(package["build_repos"], list) or not package["build_repos"]:
+        raise RuntimeError(f"package {package['name']} has invalid build_repos")
+    if not all(isinstance(repo, str) and repo for repo in package["build_repos"]):
+        raise RuntimeError(f"package {package['name']} has invalid build_repos entries")
+
+    source_requirements = {
+        "github_release": ["github_repo"],
+        "aur_pkgbuild": ["aur_package"],
+        "gitea_release": ["gitea_base_url", "gitea_repo"],
+        "git_commit": ["github_repo"],
+    }
+    for field in source_requirements[package["source_type"]]:
+        value = package.get(field)
+        if not isinstance(value, str) or not value:
+            raise RuntimeError(f"package {package['name']} is missing {field}")
+
+    if package["source_type"] == "git_commit" and package["update_strategy"] not in {"commit", "git_snapshot"}:
+        raise RuntimeError(
+            f"package {package['name']} uses git_commit with unsupported update_strategy"
+        )
+    if package["source_type"] != "git_commit" and package["update_strategy"] in {"commit", "git_snapshot"}:
+        raise RuntimeError(
+            f"package {package['name']} requires source_type git_commit for update_strategy {package['update_strategy']}"
+        )
+
+    state_fields = strategy_state_fields(package)
+    if package["update_strategy"] != "package_version" and (
+        "spec_fields" in package or "version_replace" in package
+    ):
+        raise RuntimeError(
+            f"package {package['name']} can only use spec_fields/version_replace with package_version"
+        )
+
+    package_version_rule(package)
+    if package["update_strategy"] == "package_version":
+        raw_version_used = "raw_version" in state_fields.values()
+        if raw_version_used and package["source_type"] != "github_release":
+            raise RuntimeError(
+                f"package {package['name']} uses raw_version but source_type is not github_release"
+            )
+
+
+def validate_packages(packages: list[dict]) -> None:
+    seen_names = set()
+    for package in packages:
+        name = package.get("name")
+        if name in seen_names:
+            raise RuntimeError(f"duplicate managed package name: {name}")
+        seen_names.add(name)
+        validate_package(package)
+
+
+def read_state_from_macros(spec_lines: list[str], macro_state_map: dict[str, str]) -> dict[str, str]:
+    return {
+        state_key: read_macro(spec_lines, macro_name)
+        for macro_name, state_key in macro_state_map.items()
+    }
+
+
+def read_current_state(spec_path: pathlib.Path, package: dict) -> dict[str, str]:
+    spec_lines = spec_path.read_text(encoding="utf-8").splitlines()
+    return read_state_from_macros(spec_lines, strategy_state_fields(package))
 
 
 def fetch_latest_github_release(github_repo: str, tag_prefix: str) -> str:
@@ -115,7 +235,11 @@ def fetch_latest_github_release(github_repo: str, tag_prefix: str) -> str:
     return tag_name
 
 
-def fetch_latest_github_commit(github_repo: str, github_branch: str | None) -> str:
+def format_commit_date(timestamp: str) -> str:
+    return timestamp.split("T", 1)[0].replace("-", "")
+
+
+def fetch_latest_github_commit(github_repo: str, github_branch: str | None) -> dict[str, str]:
     params = {"per_page": 1}
     if github_branch:
         params["sha"] = github_branch
@@ -127,9 +251,21 @@ def fetch_latest_github_commit(github_repo: str, github_branch: str | None) -> s
         raise RuntimeError(f"unexpected commit response for {github_repo}")
 
     try:
-        return payload[0]["sha"]
+        commit = payload[0]
+        sha = commit["sha"]
+        commit_data = commit["commit"]
+        author = commit_data["author"]
+        message = commit_data["message"].splitlines()[0].strip()
     except KeyError as exc:
-        raise RuntimeError(f"missing sha in GitHub commit response for {github_repo}") from exc
+        raise RuntimeError(f"missing commit metadata in GitHub commit response for {github_repo}") from exc
+
+    return {
+        "commit": sha,
+        "git_commit": sha,
+        "git_short": sha[:7],
+        "commit_date": format_commit_date(author["date"]),
+        "commit_msg": message,
+    }
 
 
 def fetch_aur_pkgbuild_version(aur_package: str) -> str:
@@ -167,19 +303,30 @@ def fetch_latest_gitea_release(gitea_base_url: str, gitea_repo: str, tag_prefix:
     return tag_name
 
 
-def fetch_latest_version(package: dict) -> str:
+def normalize_package_version(package: dict, raw_version: str) -> str:
+    rule = package_version_rule(package)
+    if not rule:
+        return raw_version
+    return raw_version.replace(rule["from"], rule["to"])
+
+
+def fetch_upstream_state(package: dict) -> dict[str, str]:
     source_type = package.get("source_type")
     if source_type == "github_release":
         github_repo = package.get("github_repo")
         if not github_repo:
             raise RuntimeError(f"package {package['name']} is missing github_repo")
-        return fetch_latest_github_release(github_repo, package.get("tag_prefix", ""))
+        raw_version = fetch_latest_github_release(github_repo, package.get("tag_prefix", ""))
+        return {
+            "raw_version": raw_version,
+            "package_version": normalize_package_version(package, raw_version),
+        }
 
     if source_type == "aur_pkgbuild":
         aur_package = package.get("aur_package")
         if not aur_package:
             raise RuntimeError(f"package {package['name']} is missing aur_package")
-        return fetch_aur_pkgbuild_version(aur_package)
+        return {"package_version": fetch_aur_pkgbuild_version(aur_package)}
 
     if source_type == "gitea_release":
         gitea_base_url = package.get("gitea_base_url")
@@ -188,19 +335,39 @@ def fetch_latest_version(package: dict) -> str:
             raise RuntimeError(
                 f"package {package['name']} is missing gitea_base_url or gitea_repo"
             )
-        return fetch_latest_gitea_release(
-            gitea_base_url,
-            gitea_repo,
-            package.get("tag_prefix", ""),
-        )
+        return {
+            "package_version": fetch_latest_gitea_release(
+                gitea_base_url,
+                gitea_repo,
+                package.get("tag_prefix", ""),
+            )
+        }
 
     if source_type == "git_commit":
         github_repo = package.get("github_repo")
         if not github_repo:
             raise RuntimeError(f"package {package['name']} is missing github_repo")
-        return fetch_latest_github_commit(github_repo, package.get("github_branch"))
+        commit_state = fetch_latest_github_commit(github_repo, package.get("github_branch"))
+        if package.get("update_strategy") == "commit":
+            return {"commit": commit_state["commit"]}
+        if package.get("update_strategy") == "git_snapshot":
+            return {
+                "git_commit": commit_state["git_commit"],
+                "git_short": commit_state["git_short"],
+                "commit_date": commit_state["commit_date"],
+                "commit_msg": commit_state["commit_msg"],
+            }
+        raise RuntimeError(
+            f"source_type git_commit does not support update_strategy {package.get('update_strategy')}"
+        )
 
     raise RuntimeError(f"unsupported source_type: {source_type}")
+
+
+def state_summary(state: dict[str, str]) -> str:
+    if len(state) == 1:
+        return next(iter(state.values()))
+    return ",".join(f"{key}={value}" for key, value in state.items())
 
 
 def build_matrix(packages: list[dict]) -> list[dict]:
@@ -239,15 +406,18 @@ def main() -> int:
     changed_packages = []
     for package in packages:
         spec_path = base_dir / package["subdir"] / package["spec"]
-        current_version = read_current_version(spec_path, package["update_strategy"])
-        latest_version = fetch_latest_version(package)
-        changed = current_version != latest_version
+        current_state = read_current_state(spec_path, package)
+        upstream_state = fetch_upstream_state(package)
+        changed = current_state != {
+            key: upstream_state[key]
+            for key in current_state
+        }
 
         package_report = {
             **package,
             "spec_path": str(spec_path.relative_to(base_dir)),
-            "current_version": current_version,
-            "latest_version": latest_version,
+            "current_state": current_state,
+            "upstream_state": upstream_state,
             "changed": changed,
         }
         report_packages.append(package_report)
@@ -283,8 +453,8 @@ def main() -> int:
     for package in report_packages:
         status = "changed" if package["changed"] else "unchanged"
         print(
-            f"{package['name']}: current={package['current_version']} "
-            f"latest={package['latest_version']} status={status}"
+            f"{package['name']}: current={state_summary(package['current_state'])} "
+            f"latest={state_summary(package['upstream_state'])} status={status}"
         )
     print(f"selected={values['selected_names']}")
     print(f"changed={values['changed_names']}")

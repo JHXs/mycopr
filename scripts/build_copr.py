@@ -31,6 +31,10 @@ def load_package(packages_json: pathlib.Path, package_name: str) -> dict:
 def main() -> int:
     args = parse_args()
     package = load_package(args.packages_json.resolve(), args.package)
+    if args.build_repo not in package.get("build_repos", []):
+        raise RuntimeError(
+            f"build repo {args.build_repo} is not configured for package {args.package}"
+        )
 
     command = [
         "copr-cli",
