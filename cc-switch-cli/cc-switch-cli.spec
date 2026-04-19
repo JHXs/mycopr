@@ -10,7 +10,7 @@ License:        MIT
 URL:            https://github.com/SaladDay/cc-switch-cli
 Source0:        %{url}/releases/download/v%{version}/cc-switch-cli-v%{version}-linux-x64.tar.gz
 
-BuildArch:      amd64
+BuildArch: noarch
 
 # 运行依赖
 Requires:       ca-certificates
