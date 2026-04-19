@@ -1,0 +1,84 @@
+name: Unified Copr Update
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    inputs:
+      force_build:
+        description: 'Force build even if no update'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: set-matrix
+        run: |
+          # 提取 packages.toml 中的所有包名并生成 JSON 数组
+          PACKAGES=$(python3 -c 'import tomllib; print(list(tomllib.load(open("packages.toml", "rb")).keys()))' | sed "s/'/\"/g")
+          echo "matrix=$PACKAGES" >> $GITHUB_OUTPUT
+
+  update-and-build:
+    needs: setup-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+    
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Check and Update Version
+        id: updater
+        run: |
+          uv run scripts/manage_packages.py --pkg ${{ matrix.package }} >> $GITHUB_OUTPUT
+
+      - name: Commit changes
+        if: steps.updater.outputs.updated == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "Update ${{ matrix.package }} to ${{ steps.updater.outputs.version }}"
+          file_pattern: "${{ steps.updater.outputs.spec_file }}"
+
+      - name: Build in Copr
+        if: steps.updater.outputs.updated == 'true' || github.event.inputs.force_build == 'true'
+        env:
+          COPR_CLI_CONFIG: ${{ secrets.COPR_CLI_CONFIG }}
+          REPOS: ${{ steps.updater.outputs.copr_repos }}
+          SPEC_FILE: ${{ steps.updater.outputs.spec_file }}
+        run: |
+          pip3 install copr-cli
+          # 获取 commit SHA
+          NEW_SHA=$(git rev-parse HEAD)
+          
+          # 遍历配置中的所有 Copr 仓库并触发构建
+          IFS=',' read -ra ADDR <<< "$REPOS"
+          for REPO in "${ADDR[@]}"; do
+            echo "🚀 Building ${{ matrix.package }} in $REPO..."
+            
+            # 提取 subdir 和 spec 文件名
+            SUBDIR=$(dirname "$SPEC_FILE")
+            SPEC_NAME=$(basename "$SPEC_FILE")
+
+            copr-cli --config <(echo "${COPR_CLI_CONFIG}") buildscm \
+              --clone-url "https://github.com/${{ github.repository }}" \
+              --commit "${NEW_SHA}" \
+              --subdir "${SUBDIR}" \
+              --spec "${SPEC_NAME}" \
+              --type git \
+              --method rpkg \
+              "${REPO}"
+          done

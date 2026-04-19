@@ -8,7 +8,7 @@
 
 Name:           krunner-pinyin-search
 Version:        %{git_short}
-Release:        %{commit_date}git%{git_short}%{?dist}
+Release:        git%{commit_date}%{?dist}
 Summary:        KRunner plugin for Pinyin search of applications in KDE
 
 License:        LGPL-2.1-or-later

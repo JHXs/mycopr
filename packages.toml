@@ -1,0 +1,55 @@
+[cc-switch-cli]
+type = "github_release"
+repo = "SaladDay/cc-switch-cli"
+spec = "cc-switch-cli/cc-switch-cli.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/cc-switch-cli"]
+
+[cto2api]
+type = "github_commit"
+repo = "wyeeeee/cto2api"
+spec = "cto2api/cto2api.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/cto2api"]
+
+[maple-mono]
+type = "github_release"
+repo = "subframe7536/maple-font"
+spec = "nerd-fonts/maple-mono-nf-cn-unhinted.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/nerd-fonts"]
+
+[proxybridge]
+type = "github_release"
+repo = "InterceptSuite/ProxyBridge"
+spec = "proxybridge/proxybridge.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/proxybridge"]
+
+[reframe]
+type = "github_release"
+repo = "AlynxZhou/reframe"
+spec = "reframe/reframe.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/reframe"]
+
+[krunner-pinyin-search]
+type = "github_commit_complex"
+repo = "AOSC-Dev/krunner-pinyin-search"
+spec = "krunner-pinyin-search/krunner-pinyin-search.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/krunner-pinyin-search"]
+
+[um-cli]
+type = "gitea_release"
+repo = "um/cli"
+api_base = "https://git.um-react.app"
+spec = "um-cli-copr/um-cli.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/um-cli"]
+
+[ge-proton]
+type = "github_release"
+repo = "GloriousEggroll/proton-ge-custom"
+spec = "ge-proton/ge-proton.spec"
+copr_repos = ["ikunji/mycopr"]
+transforms = { package_version = "strip_v, strip:GE-Proton, dot", proton_ver = "strip_v, strip:GE-Proton" }
+
+[zotero]
+type = "aur"
+repo = "zotero-bin"
+spec = "zotero/zotero.spec"
+copr_repos = ["ikunji/mycopr"]
