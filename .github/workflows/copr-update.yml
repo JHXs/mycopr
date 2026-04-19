@@ -47,15 +47,13 @@ jobs:
             echo "Found updates for the following packages:"
             echo "$PACKAGES" | jq -r '.[] | .name'
           fi
-  update-and-build:
+
+  update-specs:
     needs: setup-matrix
     if: needs.setup-matrix.outputs.has_updates == 'true'
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
-
+    outputs:
+      new_sha: ${{ steps.commit.outputs.commit_hash || github.sha }}
     steps:
       - uses: actions/checkout@v5
 
@@ -67,28 +65,64 @@ jobs:
       - name: Sync dependencies
         run: uv sync --locked
 
-      - name: Update Spec File
-        id: updater
+      - name: Update Spec Files
         run: |
-          # 提取数据并序列化为 JSON 字符串
-          DATA_JSON='${{ toJson(matrix.package.data) }}'
-          uv run scripts/update_spec.py --pkg ${{ matrix.package.name }} --upstream-data "$DATA_JSON" >> $GITHUB_OUTPUT
+          echo '${{ needs.setup-matrix.outputs.matrix }}' | jq -c '.[]' | while read pkg; do
+            name=$(echo "$pkg" | jq -r '.name')
+            data=$(echo "$pkg" | jq -c '.data')
+            echo "Processing $name..."
+            uv run scripts/update_spec.py --pkg "$name" --upstream-data "$data" || echo "::warning::Failed to update $name"
+          done
 
       - name: Commit changes
-        if: steps.updater.outputs.updated == 'true'
+        id: commit
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
-          commit_message: "Update ${{ matrix.package.name }} to ${{ steps.updater.outputs.version }}"
-          file_pattern: "${{ steps.updater.outputs.spec_file }}"
+          commit_message: "chore: unified spec update [skip ci]"
+
+  trigger-builds:
+    needs: [setup-matrix, update-specs]
+    # 确保在有更新或者强制构建时运行
+    if: |
+      always() && 
+      needs.setup-matrix.result == 'success' &&
+      (needs.update-specs.result == 'success' || needs.update-specs.result == 'skipped') &&
+      needs.setup-matrix.outputs.has_updates == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.update-specs.outputs.new_sha || github.sha }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Get Package Info
+        id: info
+        run: |
+          # 提取 spec 路径和 copr 仓库
+          INFO=$(uv run python -c "
+          import tomli
+          with open('packages.toml', 'rb') as f:
+              pkg_config = tomli.load(f).get('${{ matrix.package.name }}', {})
+              print(f\"spec_file={pkg_config.get('spec', '')}\")
+              print(f\"copr_repos={','.join(pkg_config.get('copr_repos', []))}\")
+          ")
+          echo "$INFO" >> $GITHUB_OUTPUT
 
       - name: Trigger Copr Build
-        if: steps.updater.outputs.updated == 'true' || github.event.inputs.force_build == 'true'
         env:
           COPR_CLI_CONFIG: ${{ secrets.COPR_CLI_CONFIG }}
-          REPOS: ${{ steps.updater.outputs.copr_repos }}
-          SPEC_FILE: ${{ steps.updater.outputs.spec_file }}
+          REPOS: ${{ steps.info.outputs.copr_repos }}
+          SPEC_FILE: ${{ steps.info.outputs.spec_file }}
         run: |
-          # 获取 commit SHA
           NEW_SHA=$(git rev-parse HEAD)
 
           IFS=',' read -ra ADDR <<< "$REPOS"
