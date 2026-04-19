@@ -58,6 +58,7 @@ jobs:
         if: steps.check.outputs.needs_update == 'true'
         run: |
           sed -i "s/^%global[[:space:]]\+package_version.*/%global package_version ${{ steps.upstream.outputs.version }}/" "$SPEC_FILE"
+          sed -i 's/^Release:.*/Release:        1%{?dist}/' "$SPEC_FILE"
           echo "✅ Spec file updated"
 
       - name: Commit and push changes
@@ -83,7 +84,7 @@ jobs:
   build:
     needs: update-version
     if: |
-      needs.update-version.outputs.needs_update == 'true' || 
+      needs.update-version.outputs.needs_update == 'true' ||
       github.event.inputs.force_build == 'true'
     runs-on: ubuntu-latest
     strategy:
