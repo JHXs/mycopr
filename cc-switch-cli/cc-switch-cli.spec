@@ -3,7 +3,7 @@
 
 Name:           cc-switch-cli
 Version:        %{package_version}
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        本项目是原版 CC-Switch 的 CLI 分支。🔄 WebDAV 同步功能与上游项目完全兼容。致谢： 原始架构和核心功能来自 https://github.com/farion1231/cc-switch
 
 License:        MIT
@@ -31,11 +31,13 @@ install -m 0755 %{_builddir}/%{name}-%{version}/cc-switch %{buildroot}%{_bindir}
 ln -sf cc-switch-cli %{buildroot}%{_bindir}/ccs
 
 %files
-%dir %{_bindir}
 %{_bindir}/cc-switch-cli
 %{_bindir}/ccs
 
 %changelog
+* Sun Apr 19 2026 hansel <user@example.com> - 5.3.3-2
+- Drop %%dir %%{_bindir} to avoid conflicting with the filesystem package
+
 * Sun Apr 19 2026 hansel <user@example.com> - 5.3.3-1
 - Rename installed CLI entry points to cc-switch-cli and ccs to avoid conflict with GUI package
 - Initial package for cc-switch-cli v5.3.3
