@@ -1,4 +1,4 @@
-%global package_version 7.8
+%global package_version 7.9
 %{!?_fontbasedir:%global _fontbasedir %{_datadir}/fonts}
 
 Name:           maple-mono-nf-cn-unhinted
@@ -45,5 +45,8 @@ if [ "$1" -eq 0 ]; then
 fi
 
 %changelog
+* Sun Apr 19 2026 GitHub Actions <actions@github.com> - 7.9-1
+- Update to 7.9
+
 * Thu Apr 09 2026 hansel <user@example.com> - 7.8-1
 - Initial package for maple-mono-nf-cn-unhinted font v7.8
