@@ -28,7 +28,8 @@ jobs:
         with:
           enable-cache: true
 
-      - id: set-matrix
+      - name: Fetch upstream data and set matrix
+        id: set-matrix
         run: |
           FORCE_ARG=""
           if [ "${{ github.event.inputs.force_build }}" == "true" ]; then
@@ -84,7 +85,7 @@ jobs:
     needs: [setup-matrix, update-specs]
     # 确保在有更新或者强制构建时运行
     if: |
-      always() && 
+      always() &&
       needs.setup-matrix.result == 'success' &&
       (needs.update-specs.result == 'success' || needs.update-specs.result == 'skipped') &&
       needs.setup-matrix.outputs.has_updates == 'true'

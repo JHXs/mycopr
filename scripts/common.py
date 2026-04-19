@@ -51,7 +51,7 @@ def get_gitea_release(api_base, repo):
 
 def fetch_upstream_data(config):
     pkg_type = config["type"]
-    if pkg_type in ["github_release", "ge_proton"]:
+    if pkg_type in ["github_release"]:
         return get_github_release(config["repo"])
     elif pkg_type == "github_commit":
         return get_github_commit(config["repo"])
@@ -70,7 +70,7 @@ def is_update_needed(config, data):
     default_transforms = {"package_version": "strip_v"}
     if config["type"] == "github_commit":
         default_transforms = {"commit": "raw"}
-    
+
     transforms = config.get("transforms", default_transforms)
     for var_name, rule in transforms.items():
         # Get value from data: try var_name directly, then fallback to version/sha/short/date
@@ -80,7 +80,7 @@ def is_update_needed(config, data):
             elif "date" in var_name: val = data.get("date")
             elif "commit" in var_name or "sha" in var_name: val = data.get("sha")
             else: val = data.get("version") or data.get("sha")
-        
+
         val = apply_transform(val, rule)
         if re.search(rf'%global\s+{var_name}\s+{re.escape(val)}', content) is None:
             return True
