@@ -19,32 +19,57 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
-    steps:
-      - uses: actions/checkout@v5
-      - id: set-matrix
-        run: |
-          # 提取 packages.toml 中的所有包名并生成 JSON 数组
-          PACKAGES=$(python3 -c 'import tomllib; print(list(tomllib.load(open("packages.toml", "rb")).keys()))' | sed "s/'/\"/g")
-          echo "matrix=$PACKAGES" >> $GITHUB_OUTPUT
-
-  update-and-build:
-    needs: setup-matrix
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
-    
+      has_updates: ${{ steps.set-matrix.outputs.has_updates }}
     steps:
       - uses: actions/checkout@v5
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
 
-      - name: Check and Update Version
+      - id: set-matrix
+        run: |
+          FORCE_ARG=""
+          if [ "${{ github.event.inputs.force_build }}" == "true" ]; then
+            FORCE_ARG="--force"
+          fi
+
+          # 获取需要更新的包及其数据
+          PACKAGES=$(uv run scripts/check_upstream.py $FORCE_ARG)
+          echo "matrix=$PACKAGES" >> $GITHUB_OUTPUT
+
+          if [ "$PACKAGES" == "[]" ]; then
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+          fi
+  update-and-build:
+    needs: setup-matrix
+    if: needs.setup-matrix.outputs.has_updates == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --locked
+
+      - name: Update Spec File
         id: updater
         run: |
-          uv run scripts/manage_packages.py --pkg ${{ matrix.package }} >> $GITHUB_OUTPUT
+          # 提取数据并序列化为 JSON 字符串
+          DATA_JSON='${{ toJson(matrix.package.data) }}'
+          uv run scripts/update_spec.py --pkg ${{ matrix.package.name }} --upstream-data "$DATA_JSON" >> $GITHUB_OUTPUT
 
       - name: Commit changes
         if: steps.updater.outputs.updated == 'true'
@@ -60,16 +85,12 @@ jobs:
           REPOS: ${{ steps.updater.outputs.copr_repos }}
           SPEC_FILE: ${{ steps.updater.outputs.spec_file }}
         run: |
-          pip3 install copr-cli
           # 获取 commit SHA
           NEW_SHA=$(git rev-parse HEAD)
-          
-          # 遍历配置中的所有 Copr 仓库并触发构建
+
           IFS=',' read -ra ADDR <<< "$REPOS"
           for REPO in "${ADDR[@]}"; do
             echo "🚀 Building ${{ matrix.package }} in $REPO..."
-            
-            # 提取 subdir 和 spec 文件名
             SUBDIR=$(dirname "$SPEC_FILE")
             SPEC_NAME=$(basename "$SPEC_FILE")
 
