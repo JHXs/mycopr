@@ -41,8 +41,11 @@ jobs:
 
           if [ "$PACKAGES" == "[]" ]; then
             echo "has_updates=false" >> $GITHUB_OUTPUT
+            echo "No updates found."
           else
             echo "has_updates=true" >> $GITHUB_OUTPUT
+            echo "Found updates for the following packages:"
+            echo "$PACKAGES" | jq -r '.[] | .name'
           fi
   update-and-build:
     needs: setup-matrix
