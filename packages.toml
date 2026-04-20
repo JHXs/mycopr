@@ -10,6 +10,12 @@ repo = "subframe7536/maple-font"
 spec = "nerd-fonts/maple-mono-nf-cn-unhinted.spec"
 copr_repos = ["ikunji/mycopr", "ikunji/nerd-fonts"]
 
+[obsidian]
+type = "github_release"
+repo = "obsidianmd/obsidian-releases"
+spec = "obsidian/obsidian.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/obsidian"]
+
 [proxybridge]
 type = "github_release"
 repo = "InterceptSuite/ProxyBridge"
