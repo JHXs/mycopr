@@ -3,7 +3,7 @@
 %global __provides_exclude_from ^%{_libdir}/obsidian/.*$
 %global __requires_exclude ^lib(EGL|GLESv2|ffmpeg|vk_swiftshader|vulkan)\.so.*$
 %global forgeurl        https://github.com/obsidianmd/obsidian-releases
-%global package_version 1.12.6
+%global package_version 1.12.7
 
 Name:           obsidian
 Version:        %{package_version}
