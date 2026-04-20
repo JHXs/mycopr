@@ -79,27 +79,47 @@ def fetch_upstream_data(config):
         return get_gitea_release(config.get("api_base"), config["repo"])
     return None
 
+def get_default_transforms(config):
+    # Most release packages update %global package_version; commit packages
+    # usually track a raw commit hash instead.
+    if config["type"] == "github_commit":
+        return {"commit": "raw"}
+    return {"package_version": "strip_v"}
+
+def pick_upstream_value(data, var_name):
+    # Prefer an exact key first, then fall back to the most likely upstream
+    # field based on the macro name we are trying to update.
+    value = data.get(var_name)
+    if value is not None:
+        return value
+
+    if "short" in var_name:
+        return data.get("short")
+    if "date" in var_name:
+        return data.get("date")
+    if "commit" in var_name or "sha" in var_name:
+        return data.get("sha")
+
+    # Release packages typically expose version; commit-based packages can still
+    # fall back to the full sha when no better match exists.
+    return data.get("version") or data.get("sha")
+
 def is_update_needed(config, data):
     spec_path = resolve_repo_path(config["spec"])
-    if not spec_path.exists(): return True
+    if not spec_path.exists():
+        return True
+
     content = spec_path.read_text()
+    transforms = config.get("transforms", get_default_transforms(config))
 
-    # Default transforms logic
-    default_transforms = {"package_version": "strip_v"}
-    if config["type"] == "github_commit":
-        default_transforms = {"commit": "raw"}
-
-    transforms = config.get("transforms", default_transforms)
     for var_name, rule in transforms.items():
-        # Get value from data: try var_name directly, then fallback to version/sha/short/date
-        val = data.get(var_name)
-        if val is None:
-            if "short" in var_name: val = data.get("short")
-            elif "date" in var_name: val = data.get("date")
-            elif "commit" in var_name or "sha" in var_name: val = data.get("sha")
-            else: val = data.get("version") or data.get("sha")
+        upstream_value = pick_upstream_value(data, var_name)
+        expected_value = apply_transform(upstream_value, rule)
+        # We consider the package up to date only when the spec already contains
+        # the exact %global macro/value pair implied by upstream.
+        pattern = rf'%global\s+{var_name}\s+{re.escape(expected_value)}'
 
-        val = apply_transform(val, rule)
-        if re.search(rf'%global\s+{var_name}\s+{re.escape(val)}', content) is None:
+        if re.search(pattern, content) is None:
             return True
+
     return False
