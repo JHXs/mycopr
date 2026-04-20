@@ -2,6 +2,25 @@
 
 收纳了 Fedora COPR 打包项目及自动化维护工具。
 
+## 软件包状态
+
+由 `python scripts/generate_readme_status.py` 自动生成。
+
+<!-- AUTO-GENERATED:STATUS_TABLE:START -->
+| Package | Status |
+| --- | --- |
+| `cc-switch-cli` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/cc-switch-cli/package/cc-switch-cli/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/cc-switch-cli/package/cc-switch-cli/) |
+| `maple-mono-nf-cn-unhinted` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/nerd-fonts/package/maple-mono-nf-cn-unhinted/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/nerd-fonts/package/maple-mono-nf-cn-unhinted/) |
+| `obsidian` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/obsidian/package/obsidian/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/obsidian/package/obsidian/) |
+| `proxybridge` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/proxybridge/package/proxybridge/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/proxybridge/package/proxybridge/) |
+| `reframe` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/reframe/package/reframe/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/reframe/package/reframe/) |
+| `um-cli` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/um-cli/package/um-cli/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/um-cli/package/um-cli/) |
+| `ge-proton` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/ge-proton/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/ge-proton/) |
+| `cto2api` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/cto2api/package/cto2api/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/cto2api/package/cto2api/) |
+| `krunner-pinyin-search` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/krunner-pinyin-search/package/krunner-pinyin-search/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/krunner-pinyin-search/package/krunner-pinyin-search/) |
+| `zotero` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/zotero/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/zotero/) |
+<!-- AUTO-GENERATED:STATUS_TABLE:END -->
+
 ## 目录结构与脚本说明
 
 项目使用 Python 脚本结合 GitHub Actions 实现自动检测上游更新并触发构建。
@@ -11,6 +30,7 @@
 - **`common.py`**: 核心逻辑库。包含了获取 GitHub (Release/Commit)、AUR、Gitea 上游数据的逻辑，以及版本号转换（Transform）和更新检测算法。
 - **`check_upstream.py`**: 自动更新检测器。由 GitHub Actions 调用，遍历 `packages/packages.toml`，识别需要更新的包并生成构建矩阵。
 - **`update_spec.py`**: Spec 文件修改器。负责按照 `transforms` 配置更新 `.spec` 中的 `%global` 宏，必要时自动生成 Changelog 条目，并在非 commit 类包上重置 `Release`。
+- **`generate_readme_status.py`**: README 状态表生成器。根据 `packages/packages.toml` 和各个 `.spec` 里的 `Name:` 自动生成 Copr build status 表。
 
 ### 配置文件
 
