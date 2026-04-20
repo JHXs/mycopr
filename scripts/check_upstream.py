@@ -1,20 +1,14 @@
 import argparse
 import json
 import sys
-from common import fetch_upstream_data, is_update_needed
-
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib
+from common import fetch_upstream_data, is_update_needed, load_packages
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--force", action="store_true", help="Force updates for all packages")
     args = parser.parse_args()
 
-    with open("packages.toml", "rb") as f:
-        packages = tomllib.load(f)
+    packages = load_packages()
 
     to_update = []
     for name, cfg in packages.items():

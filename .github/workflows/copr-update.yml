@@ -110,9 +110,14 @@ jobs:
         run: |
           # 提取 spec 路径和 copr 仓库
           INFO=$(uv run python -c "
-          import tomli
-          with open('packages.toml', 'rb') as f:
-              pkg_config = tomli.load(f).get('${{ matrix.package.name }}', {})
+          from pathlib import Path
+          try:
+              import tomllib
+          except ImportError:
+              import tomli as tomllib
+          config_path = Path('packages/packages.toml')
+          with config_path.open('rb') as f:
+              pkg_config = tomllib.load(f).get('${{ matrix.package.name }}', {})
               print(f\"spec_file={pkg_config.get('spec', '')}\")
               print(f\"copr_repos={','.join(pkg_config.get('copr_repos', []))}\")
           ")

@@ -8,13 +8,13 @@
     "cc-switch-cli": {
         "type": "github_release",
         "repo": "SaladDay/cc-switch-cli",
-        "spec": "cc-switch-cli/cc-switch-cli.spec",
+        "spec": "packages/cc-switch-cli/cc-switch-cli.spec",
         "copr_repos": ["ikunji/mycopr", "ikunji/cc-switch-cli"]
     },
     "maple-mono": {
         "type": "github_release",
         "repo": "subframe7536/maple-font",
-        "spec": "nerd-fonts/maple-mono-nf-cn-unhinted.spec",
+        "spec": "packages/nerd-fonts/maple-mono-nf-cn-unhinted.spec",
         "copr_repos": ["ikunji/mycopr", "ikunji/nerd-fonts"]
     },
     # ... 其他包依此类推
@@ -39,7 +39,7 @@
     {
         "type": "github_release",
         "repo": "SaladDay/cc-switch-cli",
-        "spec": "cc-switch-cli/cc-switch-cli.spec",
+        "spec": "packages/cc-switch-cli/cc-switch-cli.spec",
         "copr_repos": ["ikunji/mycopr", "ikunji/cc-switch-cli"]
     }
     ```
@@ -54,4 +54,4 @@
 *   **`name`**：具体的“包名”（比如 `zotero`, `ge-proton`）。
 *   **`cfg`**：这个包的“个人档案”（比如它的源代码在哪、它是 GitHub 还是 AUR 类型）。
 
-你可以把 `packages.toml` 看作一本**通讯录**，`name` 是姓名，`cfg` 是这个人的电话、地址等详细信息。脚本的工作就是按着通讯录挨个打电话确认他们搬家（出新版本）没有。
+你可以把 `packages/packages.toml` 看作一本**通讯录**，`name` 是姓名，`cfg` 是这个人的电话、地址等详细信息。脚本的工作就是按着通讯录挨个打电话确认他们搬家（出新版本）没有。

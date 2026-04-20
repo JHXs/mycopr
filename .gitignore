@@ -1,6 +1,5 @@
 rpmbuild/
 fedpkgs/
-packages
 SOURCES/
 __pycache__/
 **pkgs/

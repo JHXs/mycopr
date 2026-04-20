@@ -2,6 +2,24 @@ import re
 import httpx
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+PACKAGES_DIR = REPO_ROOT / "packages"
+PACKAGES_TOML = PACKAGES_DIR / "packages.toml"
+
+
+def load_packages():
+    try:
+        import tomllib
+    except ImportError:
+        import tomli as tomllib
+
+    with PACKAGES_TOML.open("rb") as f:
+        return tomllib.load(f)
+
+
+def resolve_repo_path(path_str):
+    return REPO_ROOT / path_str
+
 def apply_transform(v, transform_str):
     if not transform_str: return v
     for op in transform_str.split(','):
@@ -62,7 +80,7 @@ def fetch_upstream_data(config):
     return None
 
 def is_update_needed(config, data):
-    spec_path = Path(config["spec"])
+    spec_path = resolve_repo_path(config["spec"])
     if not spec_path.exists(): return True
     content = spec_path.read_text()
 

@@ -1,17 +1,11 @@
 import re
 import argparse
 import json
-from pathlib import Path
 from datetime import datetime
-from common import apply_transform
-
-try:
-    import tomllib
-except ImportError:
-    import tomli as tomllib
+from common import apply_transform, load_packages, resolve_repo_path
 
 def update_spec(config, data):
-    spec_path = Path(config["spec"])
+    spec_path = resolve_repo_path(config["spec"])
     content = spec_path.read_text()
     new_content = content
 
@@ -60,8 +54,7 @@ def main():
     args = parser.parse_args()
 
     data = json.loads(args.upstream_data)
-    with open("packages.toml", "rb") as f:
-        config = tomllib.load(f)[args.pkg]
+    config = load_packages()[args.pkg]
 
     import sys
     print(f"📝 Updating {args.pkg} spec file...", file=sys.stderr)

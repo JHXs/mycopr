@@ -32,7 +32,7 @@
 *   **决策结果**：完全匹配。**返回 `False`（已经是最新的了，歇着吧）**
 
 #### 场景 C：复杂规则（以 `ge-proton` 为例）
-在你的 `packages.toml` 里，`ge-proton` 有个很复杂的规则：
+在你的 `packages/packages.toml` 里，`ge-proton` 有个很复杂的规则：
 `transforms = { package_version = "strip_v, strip:GE-Proton, dot" }`
 
 使用curl抓取：`curl -s https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases/latest`
