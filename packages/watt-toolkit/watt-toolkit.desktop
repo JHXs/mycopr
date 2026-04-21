@@ -5,6 +5,6 @@ Comment[zh_CN]=一个开源跨平台的多功能Steam工具箱。
 Type=Application
 Exec=/usr/bin/watt-toolkit
 Icon=net.steampp.app
-Categories=Network;Utility
+Categories=Network;
 Keywords=Steam;Steam++;WattToolkit
 StartupWMClass=Steam++

@@ -1,18 +1,21 @@
-# 全局禁用 debug 包和自动 strip，防止破坏 .NET 编译后的二进制文件结构
+# 禁用 debug 包和 strip 相关 BRP，避免破坏预编译的 .NET 二进制文件
 %global debug_package %{nil}
-%global __os_install_post %{nil}
 %global _build_id_links none
+%global __brp_strip %{nil}
+%global __brp_strip_comment_note %{nil}
+%global __brp_strip_lto %{nil}
 %global appid net.steampp.app
 %global package_version 3.1.0
 
 Name:           watt-toolkit
 Version:        %{package_version}
-Release:        1%{?dist}
-Summary:        一个开源跨平台的多功能Steam工具箱
-Summary(en):    A cross-platform Steam toolbox
+Release:        2%{?dist}
+Summary:        A cross-platform Steam toolbox
+Summary(zh_CN): 一个开源跨平台的多功能 Steam 工具箱
 
 License:        GPL-3.0-only
 URL:            https://steampp.net/
+ExclusiveArch:  x86_64
 Source0:        https://github.com/BeyondDimension/SteamTools/releases/download/%{version}/Steam++_v%{version}_linux_x64.tgz
 Source1:        watt-toolkit.desktop
 Source2:        watt-toolkit
@@ -49,11 +52,12 @@ Requires:       libstdc++
 Requires:       icu
 
 %description
+An open-source, cross-platform, multi-functional Steam toolbox.
+Includes features such as achievement unlocking, local acceleration, and inventory management.
+
+%description -l zh_CN
 一个开源跨平台的多功能 Steam 工具箱。
 包含成就解锁、本地加速、库存管理等功能。
-
-%description -l en
-An open-source, cross-platform, multi-functional Steam toolbox.
 
 %prep
 %autosetup -c
@@ -72,9 +76,8 @@ cp -a assemblies/. %{buildroot}%{_libdir}/%{name}/
 cp -a native/linux-x64/. %{buildroot}%{_libdir}/%{name}/
 cp -a modules %{buildroot}%{_libdir}/%{name}/
 
-# 修复权限，但避免对 .dll 使用 strip
-find %{buildroot}%{_libdir}/%{name} -type f -exec chmod 644 {} +
-find %{buildroot}%{_libdir}/%{name}/modules -type f -name 'Steam++.*' -exec chmod 755 {} +
+# 保留上游权限，仅修正已知需要执行权限的文件
+chmod 755 %{buildroot}%{_libdir}/%{name}/modules/Accelerator/Steam++.Accelerator
 
 # 安装图标和 Desktop 文件
 install -Dm644 Icons/Watt-Toolkit.png %{buildroot}%{_datadir}/icons/hicolor/512x512/apps/%{appid}.png
@@ -87,10 +90,11 @@ install -Dm755 %{SOURCE3} %{buildroot}%{_libdir}/%{name}/script/environment_chec
 # 安装启动脚本并修正硬编码路径
 sed 's|/usr/lib/watt-toolkit|%{_libdir}/%{name}|g' %{SOURCE2} > %{buildroot}%{_libdir}/%{name}/Steam++.sh
 chmod 755 %{buildroot}%{_libdir}/%{name}/Steam++.sh
-ln -s %{_libdir}/%{name}/Steam++.sh %{buildroot}%{_bindir}/%{name}
+ln -sr %{buildroot}%{_libdir}/%{name}/Steam++.sh %{buildroot}%{_bindir}/%{name}
 
 %files
 %{_bindir}/%{name}
+%exclude %{_libdir}/%{name}/modules/Accelerator/Steam++.Accelerator
 %{_libdir}/%{name}/
 %{_datadir}/applications/%{appid}.desktop
 %{_datadir}/icons/hicolor/512x512/apps/%{appid}.png
@@ -98,6 +102,11 @@ ln -s %{_libdir}/%{name}/Steam++.sh %{buildroot}%{_bindir}/%{name}
 %caps(cap_net_bind_service=eip) %{_libdir}/%{name}/modules/Accelerator/Steam++.Accelerator
 
 %changelog
+* Tue Apr 21 2026 Hansel <hansel@example.com> - 3.1.0-2
+- Limit BRP overrides to strip-related steps instead of disabling __os_install_post
+- Restrict builds to x86_64 and make English the default package metadata
+- Fix %caps file listing and use a relative launcher symlink
+
 * Fri Apr 17 2026 Hansel <hansel@example.com> - 3.1.0-1
 - Fix "Arithmetic overflow" by disabling binary stripping
 - Add missing X11/GUI dependencies for Avalonia
