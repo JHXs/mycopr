@@ -16,7 +16,7 @@
 
 ### 1. 配置文件是怎么读进来的
 
-- [load_toml.md](/home/hansel/Documents/ITProject/copr/docs/load_toml.md)
+- [load_toml.md](./load_toml.md)
 
 适合解决的问题：
 
@@ -28,7 +28,7 @@
 
 ### 2. 上游数据是怎么抓回来的
 
-- [fetch_upstram_data.md](/home/hansel/Documents/ITProject/copr/docs/fetch_upstram_data.md)
+- [fetch_upstram_data.md](./fetch_upstram_data.md)
 
 适合解决的问题：
 
@@ -40,8 +40,8 @@
 
 ### 3. 怎么判断一个包需不需要更新
 
-- [is_update_needed.md](/home/hansel/Documents/ITProject/copr/docs/is_update_needed.md)
-- [update_detection_helpers.md](/home/hansel/Documents/ITProject/copr/docs/update_detection_helpers.md)
+- [is_update_needed.md](./is_update_needed.md)
+- [update_detection_helpers.md](./update_detection_helpers.md)
 
 两篇的区别：
 
@@ -58,7 +58,7 @@
 
 ### 4. 怎么把上游数据真正写回 `.spec`
 
-- [update_spec_script.md](/home/hansel/Documents/ITProject/copr/docs/update_spec_script.md)
+- [update_spec_script.md](./update_spec_script.md)
 
 适合解决的问题：
 
@@ -71,7 +71,7 @@
 
 ### 5. 怎么生成“待更新清单”
 
-- [check_upstream_script.md](/home/hansel/Documents/ITProject/copr/docs/check_upstream_script.md)
+- [check_upstream_script.md](./check_upstream_script.md)
 
 适合解决的问题：
 
@@ -84,7 +84,7 @@
 
 ### 6. GitHub Actions 怎么把整条链路串起来
 
-- [copr_update_workflow.md](/home/hansel/Documents/ITProject/copr/docs/copr_update_workflow.md)
+- [copr_update_workflow.md](./copr_update_workflow.md)
 
 适合解决的问题：
 
@@ -99,11 +99,11 @@
 
 建议按这个最短路径阅读：
 
-1. [load_toml.md](/home/hansel/Documents/ITProject/copr/docs/load_toml.md)
-2. [fetch_upstram_data.md](/home/hansel/Documents/ITProject/copr/docs/fetch_upstram_data.md)
-3. [update_detection_helpers.md](/home/hansel/Documents/ITProject/copr/docs/update_detection_helpers.md)
-4. [update_spec_script.md](/home/hansel/Documents/ITProject/copr/docs/update_spec_script.md)
-5. [copr_update_workflow.md](/home/hansel/Documents/ITProject/copr/docs/copr_update_workflow.md)
+1. [load_toml.md](./load_toml.md)
+2. [fetch_upstram_data.md](./fetch_upstram_data.md)
+3. [update_detection_helpers.md](./update_detection_helpers.md)
+4. [update_spec_script.md](./update_spec_script.md)
+5. [copr_update_workflow.md](./copr_update_workflow.md)
 
 ---
 
@@ -113,26 +113,26 @@
 
 先看：
 
-- [check_upstream_script.md](/home/hansel/Documents/ITProject/copr/docs/check_upstream_script.md)
-- [update_detection_helpers.md](/home/hansel/Documents/ITProject/copr/docs/update_detection_helpers.md)
+- [check_upstream_script.md](./check_upstream_script.md)
+- [update_detection_helpers.md](./update_detection_helpers.md)
 
 ### 问题：为什么 spec 没被正确改掉？
 
 先看：
 
-- [update_spec_script.md](/home/hansel/Documents/ITProject/copr/docs/update_spec_script.md)
+- [update_spec_script.md](./update_spec_script.md)
 
 ### 问题：为什么 workflow 没触发 Copr 构建？
 
 先看：
 
-- [copr_update_workflow.md](/home/hansel/Documents/ITProject/copr/docs/copr_update_workflow.md)
+- [copr_update_workflow.md](./copr_update_workflow.md)
 
 ### 问题：为什么某个上游版本抓不对？
 
 先看：
 
-- [fetch_upstram_data.md](/home/hansel/Documents/ITProject/copr/docs/fetch_upstram_data.md)
+- [fetch_upstram_data.md](./fetch_upstram_data.md)
 
 ---
 

@@ -67,3 +67,9 @@ type = "github_release"
 repo = "doy/rbw"
 spec = "packages/rbw/rbw.spec"
 copr_repos = ["ikunji/mycopr", "ikunji/rbw"]
+
+[rbw-menu]
+type = "github_release"
+repo = "rbuchberger/rbw-menu"
+spec = "packages/rbw-menu/rbw-menu.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/rbw"]
