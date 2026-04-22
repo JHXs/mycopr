@@ -85,4 +85,4 @@ transforms = { package_version = "strip_v", package_date = "raw" }
 type = "github_release"
 repo = "rgwood/systemctl-tui"
 spec = "packages/systemctl-tui/systemctl-tui.spec"
-copr_repos = ["ikunji/mycopr", "ikunji/systemctl-tui"]
+copr_repos = ["ikunji/mycopr"]

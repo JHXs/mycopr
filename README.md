@@ -19,6 +19,10 @@
 | `cto2api` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/cto2api/package/cto2api/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/cto2api/package/cto2api/) |
 | `krunner-pinyin-search` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/krunner-pinyin-search/package/krunner-pinyin-search/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/krunner-pinyin-search/package/krunner-pinyin-search/) |
 | `zotero` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/zotero/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/zotero/) |
+| `rbw` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/rbw/package/rbw/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/rbw/package/rbw/) |
+| `rbw-menu` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/rbw/package/rbw-menu/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/rbw/package/rbw-menu/) |
+| `steamcommunity302` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/steamcommunity302/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/steamcommunity302/) |
+| `systemctl-tui` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/systemctl-tui/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/systemctl-tui/) |
 <!-- AUTO-GENERATED:STATUS_TABLE:END -->
 
 ## 目录结构与脚本说明
