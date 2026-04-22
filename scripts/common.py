@@ -29,6 +29,7 @@ def apply_transform(v, transform_str):
         elif op.startswith("strip:"): v = v.replace(op[6:], "")
     return v
 
+# github 相关函数
 def get_github_release(repo):
     url = f"https://api.github.com/repos/{repo}/releases/latest"
     resp = httpx.get(url, follow_redirects=True)
@@ -53,13 +54,37 @@ def get_github_commit(repo):
         "msg": data["commit"]["message"].split('\n')[0][:60]
     }
 
+# aur 相关函数
+def parse_pkgbuild_var(text, var_name):
+    match = re.search(rf'^{re.escape(var_name)}=(.*)$', text, re.M)
+    if not match:
+        return None
+
+    value = match.group(1).strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+        value = value[1:-1]
+    return value
+
 def get_aur_version(pkgname):
     url = f"https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h={pkgname}"
     resp = httpx.get(url)
     resp.raise_for_status()
-    match = re.search(r'^pkgver=(.*)$', resp.text, re.M)
-    return {"version": match.group(1).strip()} if match else None
 
+    pkgver = parse_pkgbuild_var(resp.text, "pkgver")
+    if not pkgver:
+        return None
+
+    data = {"version": pkgver}
+    pkgdate = parse_pkgbuild_var(resp.text, "pkgdate")
+    if pkgdate:
+        data.update({
+            "date": pkgdate,
+            "pkgdate": pkgdate,
+            "package_date": pkgdate,
+        })
+    return data
+
+# gitea 相关函数
 def get_gitea_release(api_base, repo):
     url = f"{api_base}/api/v1/repos/{repo}/releases"
     resp = httpx.get(url)

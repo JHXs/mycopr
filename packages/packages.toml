@@ -73,3 +73,10 @@ type = "github_release"
 repo = "rbuchberger/rbw-menu"
 spec = "packages/rbw-menu/rbw-menu.spec"
 copr_repos = ["ikunji/mycopr", "ikunji/rbw"]
+
+[steamcommunity302]
+type = "aur"
+repo = "steamcommunity302"
+spec = "packages/steamcommunity302/steamcommunity302.spec"
+copr_repos = ["ikunji/mycopr"]
+transforms = { package_version = "strip_v", package_date = "raw" }
