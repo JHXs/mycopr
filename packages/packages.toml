@@ -86,3 +86,9 @@ type = "github_release"
 repo = "rgwood/systemctl-tui"
 spec = "packages/systemctl-tui/systemctl-tui.spec"
 copr_repos = ["ikunji/mycopr"]
+
+[claude-code]
+type = "aur"
+repo = "claude-code"
+spec = "packages/claude-code/claude-code.spec"
+copr_repos = ["ikunji/mycopr"]

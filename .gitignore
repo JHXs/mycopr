@@ -3,6 +3,7 @@ fedpkgs/
 SOURCES/
 __pycache__/
 **pkgs/
+aur*/
 **.src.rpm
 **.rpm
 **.tar.gz
