@@ -1,3 +1,6 @@
+%define debug_package %{nil}
+%global _debugsource_packages 0
+
 %global package_version 1.15.1
 
 Name:           reframe
