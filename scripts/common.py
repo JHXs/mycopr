@@ -55,8 +55,8 @@ def get_github_commit(repo):
     }
 
 # aur 相关函数
-def parse_pkgbuild_var(text, var_name):
-    match = re.search(rf'^{re.escape(var_name)}=(.*)$', text, re.M)
+def parse_var(text, var_name):
+    match = re.search(rf'^\s*{re.escape(var_name)}\s*=\s*(.*)$', text, re.M)
     if not match:
         return None
 
@@ -65,23 +65,28 @@ def parse_pkgbuild_var(text, var_name):
         value = value[1:-1]
     return value
 
-def get_aur_version(pkgname):
-    url = f"https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h={pkgname}"
-    resp = httpx.get(url)
+def fetch_aur_file(pkgname, filename):
+    url = f"https://aur.archlinux.org/cgit/aur.git/plain/{filename}?h={pkgname}"
+    resp = httpx.get(url, follow_redirects=True)
     resp.raise_for_status()
+    return resp.text
 
-    pkgver = parse_pkgbuild_var(resp.text, "pkgver")
+def get_aur_version(pkgname):
+    srcinfo = fetch_aur_file(pkgname, ".SRCINFO")
+    pkgver = parse_var(srcinfo, "pkgver")
     if not pkgver:
         return None
-
     data = {"version": pkgver}
-    pkgdate = parse_pkgbuild_var(resp.text, "pkgdate")
+
+    pkgbuild = fetch_aur_file(pkgname, "PKGBUILD")
+    pkgdate = parse_var(pkgbuild, "pkgdate")
     if pkgdate:
         data.update({
             "date": pkgdate,
             "pkgdate": pkgdate,
             "package_date": pkgdate,
         })
+
     return data
 
 # gitea 相关函数
@@ -139,6 +144,8 @@ def is_update_needed(config, data):
 
     for var_name, rule in transforms.items():
         upstream_value = pick_upstream_value(data, var_name)
+        if upstream_value is None:
+            raise RuntimeError(f"missing upstream value for {var_name}")
         expected_value = apply_transform(upstream_value, rule)
         # We consider the package up to date only when the spec already contains
         # the exact %global macro/value pair implied by upstream.

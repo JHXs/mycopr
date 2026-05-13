@@ -14,6 +14,8 @@ def main():
     for name, cfg in packages.items():
         try:
             data = fetch_upstream_data(cfg)
+            if not data:
+                raise RuntimeError("no upstream data returned")
             if args.force or is_update_needed(cfg, data):
                 to_update.append({"name": name, "data": data})
         except Exception as e:

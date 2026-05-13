@@ -2,7 +2,7 @@ import re
 import argparse
 import json
 from datetime import datetime
-from common import apply_transform, load_packages, resolve_repo_path
+from common import apply_transform, load_packages, pick_upstream_value, resolve_repo_path
 
 def update_spec(config, data):
     spec_path = resolve_repo_path(config["spec"])
@@ -16,14 +16,9 @@ def update_spec(config, data):
     
     transforms = config.get("transforms", default_transforms)
     for var_name, rule in transforms.items():
-        # Get value from data: try var_name directly, then fallback to version/sha/short/date
-        val = data.get(var_name)
+        val = pick_upstream_value(data, var_name)
         if val is None:
-            if "short" in var_name: val = data.get("short")
-            elif "date" in var_name: val = data.get("date")
-            elif "commit" in var_name or "sha" in var_name: val = data.get("sha")
-            else: val = data.get("version") or data.get("sha")
-            
+            raise RuntimeError(f"missing upstream value for {var_name}")
         val = apply_transform(val, rule)
         new_content = re.sub(rf'(%global\s+{var_name}\s+)\S+', rf'\g<1>{val}', new_content)
 
