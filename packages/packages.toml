@@ -92,3 +92,9 @@ type = "aur"
 repo = "claude-code"
 spec = "packages/claude-code/claude-code.spec"
 copr_repos = ["ikunji/mycopr"]
+
+[y-cruncher]
+type = "aur"
+repo = "y-cruncher"
+spec = "packages/y-cruncher/y-cruncher.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/y-cruncher"]
