@@ -75,11 +75,24 @@ jobs:
             uv run scripts/update_spec.py --pkg "$name" --upstream-data "$data" || echo "::warning::Failed to update $name"
           done
 
+      - name: Build commit message
+        id: commit-message
+        env:
+          MATRIX: ${{ needs.setup-matrix.outputs.matrix }}
+        run: |
+          {
+            echo 'message<<EOF'
+            echo 'chore: update copr specs [skip ci]'
+            echo
+            printf '%s\n' "$MATRIX" | jq -r '.[] | "- \(.name) -> \(.data.version // .data.short // .data.sha // "updated")"'
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
       - name: Commit changes
         id: commit
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
-          commit_message: "chore: unified spec update [skip ci]"
+          commit_message: ${{ steps.commit-message.outputs.message }}
 
   trigger-builds:
     needs: [setup-matrix, update-specs]
