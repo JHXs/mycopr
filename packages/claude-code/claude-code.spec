@@ -2,7 +2,7 @@
 %global _debugsource_packages 0
 %global __strip /bin/true
 %global _build_id_links none
-%global package_version 2.1.141
+%global package_version 2.1.142
 
 Name:           claude-code
 Version:        %{package_version}
