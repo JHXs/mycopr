@@ -4,12 +4,13 @@
 
 # Adjust these based on the upstream release
 %global tag             main
-%global commit 3bdfcbfc72cbfa696de9cbb8dedbe129457e2600
+%global commit          3bdfcbfc72cbfa696de9cbb8dedbe129457e2600
+%global commit_ts       20251018064608
 %global shortcommit     %(c=%{commit}; echo ${c:0:7})
 
 Name:           cto2api
-Version:        %{shortcommit}
-Release:        1%{?dist}
+Version:        0.%{commit_ts}
+Release:        git%{shortcommit}%{?dist}
 Summary:        OpenAI compatible API interface for CTO.NEW AI services
 
 License:        MIT

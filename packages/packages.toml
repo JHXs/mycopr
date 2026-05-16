@@ -7,7 +7,7 @@ copr_repos = ["ikunji/mycopr", "ikunji/cc-switch-cli"]
 [maple-mono]
 type = "github_release"
 repo = "subframe7536/maple-font"
-spec = "packages/nerd-fonts/maple-mono-nf-cn-unhinted.spec"
+spec = "packages/nerd-fonts/MapleMonoNormalNL-NF-CN-unhinted.spec"
 copr_repos = ["ikunji/mycopr", "ikunji/nerd-fonts"]
 
 [obsidian]
@@ -47,6 +47,7 @@ type = "github_commit"
 repo = "wyeeeee/cto2api"
 spec = "packages/cto2api/cto2api.spec"
 copr_repos = ["ikunji/mycopr", "ikunji/cto2api"]
+transforms = { commit = "raw", commit_ts = "raw" }
 
 [krunner-pinyin-search]
 type = "github_commit"

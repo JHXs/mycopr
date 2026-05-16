@@ -1,15 +1,14 @@
 %global package_version 7.9
 %{!?_fontbasedir:%global _fontbasedir %{_datadir}/fonts}
 
-Name:           maple-mono-nf-cn-unhinted
+Name:           MapleMonoNormalNL-NF-CN-unhinted
 Version:        %{package_version}
 Release:        1%{?dist}
 Summary:        Open source monospace font with round corner, ligatures and Nerd-Font icons for IDE and terminal
 
 License:        OFL-1.1
 URL:            https://github.com/subframe7536/maple-font
-Source0:        https://github.com/subframe7536/maple-font/releases/download/v%{version}/MapleMono-NF-CN-unhinted.zip
-
+Source0:        https://github.com/subframe7536/maple-font/releases/download/v%{version}/MapleMonoNormalNL-NF-CN-unhinted.zip
 BuildArch:      noarch
 BuildRequires:  unzip
 BuildRequires:  fonts-srpm-macros

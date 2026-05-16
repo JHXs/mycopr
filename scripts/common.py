@@ -43,7 +43,9 @@ def get_github_commit(repo):
     data = resp.json()[0]
     sha = data["sha"]
     short = sha[:7]
-    date = data["commit"]["author"]["date"].split('T')[0].replace('-', '')
+    author_date = data["commit"]["author"]["date"]
+    date = author_date.split('T')[0].replace('-', '')
+    commit_ts = author_date.replace('-', '').replace(':', '').replace('T', '').replace('Z', '')
     return {
         "sha": sha,
         "git_commit": sha,
@@ -51,6 +53,7 @@ def get_github_commit(repo):
         "git_short": short,
         "date": date,
         "commit_date": date,
+        "commit_ts": commit_ts,
         "msg": data["commit"]["message"].split('\n')[0][:60]
     }
 
