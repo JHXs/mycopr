@@ -20,7 +20,15 @@ def update_spec(config, data):
         if val is None:
             raise RuntimeError(f"missing upstream value for {var_name}")
         val = apply_transform(val, rule)
-        new_content = re.sub(rf'(%global\s+{var_name}\s+)\S+', rf'\g<1>{val}', new_content)
+        pattern = rf'(%global\s+{re.escape(var_name)}\s+)\S+'
+        new_content, replace_count = re.subn(
+            pattern,
+            lambda match: f"{match.group(1)}{val}",
+            new_content,
+            count=1,
+        )
+        if replace_count == 0:
+            raise RuntimeError(f"missing %global macro for {var_name} in {spec_path}")
 
     # 2. 自动生成 Changelog (如果配置了 update_changelog)
     if config.get("update_changelog") and "%changelog" in new_content:
@@ -58,7 +66,7 @@ def main():
     if updated:
         print(f"  ✨ Successfully updated to {data.get('version') or data.get('short')}", file=sys.stderr)
     else:
-        print(f"  ℹ️ No changes needed for spec file", file=sys.stderr)
+        print("  ℹ️ No changes needed for spec file", file=sys.stderr)
 
     # 输出结果给 GHA
     print(f"updated={'true' if updated else 'false'}")

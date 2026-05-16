@@ -72,8 +72,11 @@ jobs:
             name=$(echo "$pkg" | jq -r '.name')
             data=$(echo "$pkg" | jq -c '.data')
             echo "Processing $name..."
-            uv run scripts/update_spec.py --pkg "$name" --upstream-data "$data" || echo "::warning::Failed to update $name"
+            uv run scripts/update_spec.py --pkg "$name" --upstream-data "$data"
           done
+
+      - name: Update README status table
+        run: uv run scripts/generate_readme_status.py
 
       - name: Build commit message
         id: commit-message
