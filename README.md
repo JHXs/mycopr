@@ -10,7 +10,7 @@
 | Package | Status |
 | --- | --- |
 | `cc-switch-cli` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/cc-switch-cli/package/cc-switch-cli/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/cc-switch-cli/package/cc-switch-cli/) |
-| `maple-mono-nf-cn-unhinted` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/nerd-fonts/package/maple-mono-nf-cn-unhinted/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/nerd-fonts/package/maple-mono-nf-cn-unhinted/) |
+| `MapleMonoNormalNL-NF-CN-unhinted` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/nerd-fonts/package/MapleMonoNormalNL-NF-CN-unhinted/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/nerd-fonts/package/MapleMonoNormalNL-NF-CN-unhinted/) |
 | `obsidian` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/obsidian/package/obsidian/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/obsidian/package/obsidian/) |
 | `proxybridge` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/proxybridge/package/proxybridge/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/proxybridge/package/proxybridge/) |
 | `reframe` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/reframe/package/reframe/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/reframe/package/reframe/) |
@@ -23,6 +23,8 @@
 | `rbw-menu` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/rbw/package/rbw-menu/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/rbw/package/rbw-menu/) |
 | `steamcommunity302` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/steamcommunity302/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/steamcommunity302/) |
 | `systemctl-tui` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/systemctl-tui/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/systemctl-tui/) |
+| `claude-code` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/claude-code/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/claude-code/) |
+| `y-cruncher` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/y-cruncher/package/y-cruncher/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/y-cruncher/package/y-cruncher/) |
 <!-- AUTO-GENERATED:STATUS_TABLE:END -->
 
 ## 目录结构与脚本说明
