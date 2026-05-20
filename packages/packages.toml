@@ -57,6 +57,12 @@ copr_repos = ["ikunji/mycopr", "ikunji/krunner-pinyin-search"]
 update_changelog = true
 transforms = { git_commit = "raw", git_short = "raw", commit_date = "raw" }
 
+[linux-enable-ir-emitter]
+type = "github_release"
+repo = "EmixamPP/linux-enable-ir-emitter"
+spec = "packages/linux-enable-ir-emitter/linux-enable-ir-emitter.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/linux-enable-ir-emitter"]
+
 [zotero]
 type = "aur"
 repo = "zotero-bin"
