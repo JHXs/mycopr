@@ -5,14 +5,16 @@
 
 Name:           rbw
 Version:        %{package_version}
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        unofficial bitwarden cli
 
 License:        MIT
 URL:            %{forgeurl}
 Source0:        %{forgeurl}/releases/download/%{version}/rbw_%{version}_linux_amd64.tar.gz
+Source1:        %{forgeurl}/raw/%{version}/bin/rbw-pinentry-keyring
 
 Requires:       pinentry
+Requires:       /usr/bin/secret-tool
 
 ExclusiveArch:  x86_64
 
@@ -29,6 +31,7 @@ unofficial bitwarden cli
 %install
 install -Dm0755 %{name} %{buildroot}%{_bindir}/%{name}
 install -Dm0755 %{name}-agent %{buildroot}%{_bindir}/%{name}-agent
+install -Dm0755 %{SOURCE1} %{buildroot}%{_bindir}/rbw-pinentry-keyring
 install -Dm644 completion/bash %{buildroot}%{_datadir}/bash-completion/completions/rbw
 install -Dm644 completion/fish %{buildroot}%{_datadir}/fish/vendor_completions.d/rbw.fish
 install -Dm644 completion/zsh  %{buildroot}%{_datadir}/zsh/site-functions/_rbw
@@ -36,10 +39,14 @@ install -Dm644 completion/zsh  %{buildroot}%{_datadir}/zsh/site-functions/_rbw
 %files
 %{_bindir}/%{name}
 %{_bindir}/%{name}-agent
+%{_bindir}/rbw-pinentry-keyring
 %{_datadir}/bash-completion/completions/rbw
 %{_datadir}/fish/vendor_completions.d/rbw.fish
 %{_datadir}/zsh/site-functions/_rbw
 
 %changelog
+* Fri May 22 2026 Ikunji <ikunji@duck.com> - 1.15.0-2
+- Install rbw-pinentry-keyring
+
 * Sat Apr 18 2026 Ikunji <ikunji@duck.com> - 1.15.0-1
 - Package upstream Linux release binaries for Copr
