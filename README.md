@@ -120,17 +120,18 @@ sudo dnf install -y mock rpmdevtools rpm-build spectool
 sudo usermod -aG mock $USER
 
 # 下载 spec 中声明的源码到当前目录
-spectool -g -R packages/<子项目目录>/<spec文件名>
+cd packages/<子项目目录>
+spectool -g <spec文件名>
 
 # 使用 mock 构建 SRPM
-mock -r fedora-rawhide-x86_64 --buildsrpm \
-  --spec packages/<子项目目录>/<spec文件名> \
+mock -r fedora-44-x86_64 --buildsrpm \
+  --spec <spec文件名> \
   --sources .
   
-cp /var/lib/mock/fedora-rawhide-x86_64/result/*.src.rpm .
+cp /var/lib/mock/fedora-44-x86_64/result/*.src.rpm .
 
 # 使用 mock 构建二进制 RPM
-mock -r fedora-rawhide-x86_64 --rebuild ./xxx.src.rpm
+mock -r fedora-44-x86_64 --rebuild ./xxx.src.rpm
 ```
 
 ## 备注

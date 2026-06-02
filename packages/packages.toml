@@ -100,6 +100,12 @@ repo = "claude-code"
 spec = "packages/claude-code/claude-code.spec"
 copr_repos = ["ikunji/mycopr"]
 
+[antigravity]
+type = "aur"
+repo = "antigravity"
+spec = "packages/antigravity/antigravity.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/antigravity"]
+
 [y-cruncher]
 type = "aur"
 repo = "y-cruncher"
