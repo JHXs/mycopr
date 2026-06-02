@@ -71,7 +71,12 @@ _build=5119448496078848
 
 脚本会用 `parse_simple_vars()` 扫描 `.SRCINFO` 和 `PKGBUILD` 中的简单变量赋值。
 
-会解析这种：
+其中：
+
+- `.SRCINFO`：允许解析带缩进的字段，因为 `.SRCINFO` 本身就是缩进式元数据。
+- `PKGBUILD`：只解析顶层赋值，避免误把 `package()` / `build()` 函数体内的临时变量当成上游字段。
+
+会解析这种顶层变量：
 
 ```bash
 pkgver=2.0.10
@@ -89,12 +94,18 @@ depends=(gtk3 nss)
 pkgver() { ... }
 _build=$(curl ...)
 _hash=`git rev-parse HEAD`
+
+package() {
+    _rel=${_f#${_src}/}
+    _dst=${pkgdir}${_install_dir}/${_rel}
+}
 ```
 
 跳过数组、命令替换和函数的原因是：
 
 - 它们不是简单标量值；
 - 直接用正则解析 shell 语法容易误判；
+- 函数体内的变量通常只是打包过程临时变量，不是上游版本字段；
 - spec 宏更新通常只需要版本号、日期、commit、build id 这类简单值。
 
 ---
@@ -373,7 +384,49 @@ transforms = { upstream_tag = "strip_v" }
 
 ---
 
-## 10. 当前 AUR 字段解析流程图
+## 10. `check_upstream.py` 为什么不会输出全部内部字段
+
+AUR 内部解析时会得到比较完整的 `data` 字典，可能包含：
+
+```python
+{
+    "pkgbase": "antigravity",
+    "pkgver": "2.0.10",
+    "source_x86_64": "...",
+    "_build": "5119448496078848",
+    "build": "5119448496078848",
+    "version": "2.0.10"
+}
+```
+
+这些完整字段用于：
+
+- `is_update_needed()` 判断是否需要更新；
+- `pick_upstream_value()` 给不同 spec 宏找合适的上游值。
+
+但是 `check_upstream.py` 输出给 GitHub Actions 的 JSON 会经过 `compact_upstream_data()` 压缩，只保留后续 `update_spec.py` 真正需要的字段。
+
+例如 Antigravity 最终输出类似：
+
+```json
+{
+  "name": "antigravity",
+  "data": {
+    "package_version": "2.0.10",
+    "upstream_build": "5119448496078848",
+    "version": "2.0.10"
+  }
+}
+```
+
+也就是说：
+
+- 内部解析可以多，方便通用字段匹配；
+- 对外输出要少，避免 workflow JSON 太臃肿。
+
+---
+
+## 11. 当前 AUR 字段解析流程图
 
 ```mermaid
 graph TD

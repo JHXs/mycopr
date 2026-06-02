@@ -70,9 +70,10 @@ def parse_var(text, var_name):
         return None
     return unquote_shell_value(match.group(1))
 
-def parse_simple_vars(text):
+def parse_simple_vars(text, *, top_level_only=False):
     vars = {}
-    for match in re.finditer(r'^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$', text, re.M):
+    pattern = r'^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$' if top_level_only else r'^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$'
+    for match in re.finditer(pattern, text, re.M):
         name = match.group(1)
         value = match.group(2).strip()
 
@@ -98,7 +99,7 @@ def get_aur_version(pkgname):
     # contain private helper variables such as _build. Let PKGBUILD override
     # when the same scalar appears in both files.
     data = parse_simple_vars(srcinfo)
-    data.update(parse_simple_vars(pkgbuild))
+    data.update(parse_simple_vars(pkgbuild, top_level_only=True))
 
     pkgver = data.get("pkgver")
     if not pkgver:
@@ -173,6 +174,23 @@ def pick_upstream_value(data, var_name):
     # Release packages typically expose version; commit-based packages can still
     # fall back to the full sha when no better match exists.
     return data.get("version") or data.get("sha")
+
+def compact_upstream_data(config, data):
+    result = {}
+    transforms = config.get("transforms", get_default_transforms(config))
+
+    for var_name in transforms:
+        value = pick_upstream_value(data, var_name)
+        if value is not None:
+            result[var_name] = value
+
+    # Keep commonly used metadata for update_spec.py output and changelog logic.
+    for key in ("version", "sha", "short", "date", "msg"):
+        if key in data:
+            result.setdefault(key, data[key])
+
+    return result
+
 
 def is_update_needed(config, data):
     spec_path = resolve_repo_path(config["spec"])

@@ -85,7 +85,9 @@ Gitea 是一个开源版的 GitHub。如果软件托管在私有服务器上（�
 ---
 
 # 返回值
-fetch_upstream_data` 的返回结果就是一个 **Python 字典**。根据不同的包类型（Type），字典里的内容也不一样。
+`fetch_upstream_data` 的返回结果就是一个 **Python 字典**。根据不同的包类型（Type），字典里的内容也不一样。
+
+注意：这里说的是脚本内部拿到的完整上游数据。`check_upstream.py` 最后输出给 GitHub Actions 的 JSON 会再经过 `compact_upstream_data()` 压缩，只保留 `transforms` 需要的字段和少量元数据。
 
 以下是针对 `packages/packages.toml` 里的四个典型包，脚本运行后返回的“情报”样子：
 
@@ -125,7 +127,7 @@ fetch_upstream_data` 的返回结果就是一个 **Python 字典**。根据不�
 ---
 
 ### 3. 针对 `aur` 类型
-AUR 类型会从 `.SRCINFO` 和 `PKGBUILD` 中解析简单变量，并返回一个字段更丰富的字典。
+AUR 类型会从 `.SRCINFO` 和 `PKGBUILD` 中解析简单变量，因此内部返回的完整字典可能字段比较丰富。
 
 *   **输入配置**：`{"type": "aur", "repo": "antigravity"}`
 *   **返回字典示例**：

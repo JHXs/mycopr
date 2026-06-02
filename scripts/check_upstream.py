@@ -1,7 +1,7 @@
 import argparse
 import json
 import sys
-from common import fetch_upstream_data, is_update_needed, load_packages
+from common import compact_upstream_data, fetch_upstream_data, is_update_needed, load_packages
 
 def main():
     parser = argparse.ArgumentParser()
@@ -17,7 +17,7 @@ def main():
             if not data:
                 raise RuntimeError("no upstream data returned")
             if args.force or is_update_needed(cfg, data):
-                to_update.append({"name": name, "data": data})
+                to_update.append({"name": name, "data": compact_upstream_data(cfg, data)})
         except Exception as e:
             print(f"Error fetching {name}: {e}", file=sys.stderr)
 
