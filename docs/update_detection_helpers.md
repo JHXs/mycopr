@@ -191,9 +191,48 @@ if value is not None:
 
 ---
 
-### 第二层：按名字特征兜底
+### 第二层：`upstream_xxx` 专用兜底
 
-如果没有同名字段，就开始根据宏名猜。
+如果没有同名字段，并且宏名以 `upstream_` 开头，会先尝试匹配去掉前缀后的字段。
+
+```python
+if var_name.startswith("upstream_"):
+    suffix = var_name.removeprefix("upstream_")
+    value = data.get(suffix) or data.get(f"_{suffix}")
+```
+
+例如：
+
+- `var_name = "upstream_build"`
+- 先找 `data["upstream_build"]`
+- 没有的话，再找 `data["build"]`
+- 还没有的话，再找 `data["_build"]`
+
+这主要是为了兼容 AUR PKGBUILD 的私有变量命名。AUR 里可能写：
+
+```bash
+_build=5119448496078848
+```
+
+而 Fedora spec 里更适合写：
+
+```spec
+%global upstream_build 5119448496078848
+```
+
+这样 `packages.toml` 只需要写：
+
+```toml
+transforms = { upstream_build = "raw" }
+```
+
+详细的 AUR 字段来源见 [aur_field_parsing.md](./aur_field_parsing.md)。
+
+---
+
+### 第三层：按名字特征兜底
+
+如果前面都没匹配到，就开始根据宏名猜。
 
 #### 1. 宏名里带 `short`
 
@@ -248,6 +287,8 @@ return data.get("version") or data.get("sha")
 - `var_name = "package_version"`
 - 它既不带 `short`，也不带 `date`，也不带 `sha`
 - 那就大概率应该取 `version`
+
+对于 AUR 包，`version` 通常来自 `pkgver` 的自动别名。
 
 ---
 

@@ -58,15 +58,31 @@ def get_github_commit(repo):
     }
 
 # aur 相关函数
+def unquote_shell_value(value):
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+        value = value[1:-1]
+    return value
+
 def parse_var(text, var_name):
     match = re.search(rf'^\s*{re.escape(var_name)}\s*=\s*(.*)$', text, re.M)
     if not match:
         return None
+    return unquote_shell_value(match.group(1))
 
-    value = match.group(1).strip()
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
-        value = value[1:-1]
-    return value
+def parse_simple_vars(text):
+    vars = {}
+    for match in re.finditer(r'^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$', text, re.M):
+        name = match.group(1)
+        value = match.group(2).strip()
+
+        # Skip arrays and command substitutions. They are common in PKGBUILD but
+        # not useful as scalar upstream-version fields for spec macro updates.
+        if value.startswith("(") or value.startswith("$(") or value.startswith("`"):
+            continue
+
+        vars[name] = unquote_shell_value(value)
+    return vars
 
 def fetch_aur_file(pkgname, filename):
     url = f"https://aur.archlinux.org/cgit/aur.git/plain/{filename}?h={pkgname}"
@@ -76,19 +92,32 @@ def fetch_aur_file(pkgname, filename):
 
 def get_aur_version(pkgname):
     srcinfo = fetch_aur_file(pkgname, ".SRCINFO")
-    pkgver = parse_var(srcinfo, "pkgver")
+    pkgbuild = fetch_aur_file(pkgname, "PKGBUILD")
+
+    # .SRCINFO contains evaluated public package metadata; PKGBUILD can also
+    # contain private helper variables such as _build. Let PKGBUILD override
+    # when the same scalar appears in both files.
+    data = parse_simple_vars(srcinfo)
+    data.update(parse_simple_vars(pkgbuild))
+
+    pkgver = data.get("pkgver")
     if not pkgver:
         return None
-    data = {"version": pkgver}
 
-    pkgbuild = fetch_aur_file(pkgname, "PKGBUILD")
-    pkgdate = parse_var(pkgbuild, "pkgdate")
+    data["version"] = pkgver
+
+    pkgdate = data.get("pkgdate")
     if pkgdate:
         data.update({
             "date": pkgdate,
-            "pkgdate": pkgdate,
             "package_date": pkgdate,
         })
+
+    # Expose aliases for private PKGBUILD variables. For example, _build is
+    # available as both "_build" and "build".
+    for key, value in list(data.items()):
+        if key.startswith("_") and len(key) > 1:
+            data.setdefault(key[1:], value)
 
     return data
 
@@ -125,6 +154,14 @@ def pick_upstream_value(data, var_name):
     value = data.get(var_name)
     if value is not None:
         return value
+
+    # Package macros often use names like upstream_build while AUR PKGBUILDs use
+    # build/_build. Try those aliases before generic version fallback.
+    if var_name.startswith("upstream_"):
+        suffix = var_name.removeprefix("upstream_")
+        value = data.get(suffix) or data.get(f"_{suffix}")
+        if value is not None:
+            return value
 
     if "short" in var_name:
         return data.get("short")

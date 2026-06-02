@@ -105,6 +105,7 @@ type = "aur"
 repo = "antigravity"
 spec = "packages/antigravity/antigravity.spec"
 copr_repos = ["ikunji/mycopr", "ikunji/antigravity"]
+transforms = { package_version = "strip_v", upstream_build = "raw" }
 
 [y-cruncher]
 type = "aur"

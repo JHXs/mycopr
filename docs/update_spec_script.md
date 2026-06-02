@@ -228,17 +228,17 @@ transforms = { git_commit = "raw", git_short = "raw", commit_date = "raw" }
 循环里这段逻辑：
 
 ```python
-val = data.get(var_name)
+val = pick_upstream_value(data, var_name)
 if val is None:
-    if "short" in var_name: val = data.get("short")
-    elif "date" in var_name: val = data.get("date")
-    elif "commit" in var_name or "sha" in var_name: val = data.get("sha")
-    else: val = data.get("version") or data.get("sha")
+    raise RuntimeError(f"missing upstream value for {var_name}")
+val = apply_transform(val, rule)
 ```
 
-它和 `common.py` 里的 `pick_upstream_value()` 是同一类思路：
+也就是说，`update_spec.py` 和 `is_update_needed()` 使用同一套字段选择规则：
 
 > 先试同名字段，找不到再根据宏名猜最合理的上游字段。
+
+这套规则在 `scripts/common.py` 的 `pick_upstream_value()` 里。详细解释见 [update_detection_helpers.md](./update_detection_helpers.md)。
 
 ### 举例 1：普通 release 包
 
@@ -283,6 +283,44 @@ data = {"short": "abcdef1"}
 ```python
 val == "abcdef1"
 ```
+
+### 举例 3：AUR 包的 `upstream_build`
+
+假设 AUR `PKGBUILD` 里有：
+
+```bash
+_build=5119448496078848
+```
+
+AUR 解析后 `data` 里会有：
+
+```python
+data = {
+    "_build": "5119448496078848",
+    "build": "5119448496078848"
+}
+```
+
+spec 里要更新：
+
+```spec
+%global upstream_build 5119448496078848
+```
+
+配置写：
+
+```toml
+transforms = { upstream_build = "raw" }
+```
+
+执行过程：
+
+1. `data.get("upstream_build")` 拿不到
+2. `upstream_build` 以 `upstream_` 开头，后缀是 `build`
+3. 尝试 `data["build"]`
+4. 得到 `5119448496078848`
+
+更完整的 AUR 字段解析见 [aur_field_parsing.md](./aur_field_parsing.md)。
 
 ---
 

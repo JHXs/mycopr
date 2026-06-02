@@ -28,12 +28,14 @@
 
 ### 2. 上游数据是怎么抓回来的
 
-- [fetch_upstram_data.md](./fetch_upstram_data.md)
+- [fetch_upstream_data.md](./fetch_upstream_data.md)
+- [aur_field_parsing.md](./aur_field_parsing.md)
 
 适合解决的问题：
 
 - `github_release`、`github_commit`、`aur`、`gitea_release` 这几种类型分别怎么获取版本
 - `fetch_upstream_data()` 返回的数据结构长什么样
+- AUR 的 `.SRCINFO` / `PKGBUILD` 字段是怎么解析和生成别名的
 - 为什么有的包返回 `version`，有的返回 `sha` / `short` / `date`
 
 ---
@@ -100,7 +102,7 @@
 建议按这个最短路径阅读：
 
 1. [load_toml.md](./load_toml.md)
-2. [fetch_upstram_data.md](./fetch_upstram_data.md)
+2. [fetch_upstream_data.md](./fetch_upstream_data.md)
 3. [update_detection_helpers.md](./update_detection_helpers.md)
 4. [update_spec_script.md](./update_spec_script.md)
 5. [copr_update_workflow.md](./copr_update_workflow.md)
@@ -132,7 +134,8 @@
 
 先看：
 
-- [fetch_upstram_data.md](./fetch_upstram_data.md)
+- [fetch_upstream_data.md](./fetch_upstream_data.md)
+- 如果是 AUR 字段问题，再看 [aur_field_parsing.md](./aur_field_parsing.md)
 
 ---
 

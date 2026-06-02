@@ -38,18 +38,21 @@
 
 
 ### 3. `get_aur_version` (Arch Linux AUR 专家)
-*   **它的活儿**：这哥们不去 GitHub，而是去爬 **AUR (Arch User Repository)** 的网页。
-*   **实现细节**：它下载该包的 `PKGBUILD` 文件（Arch Linux 的打包脚本），然后用正则表达式（`re.search`）去里面搜寻 `pkgver=` 这一行。
-*   **适用场景**：如果你想让你的 Copr 仓库跟 Arch Linux 的 AUR 社区同步更新时使用。
+*   **它的活儿**：它不去 GitHub，而是去 **AUR (Arch User Repository)** 读取 Arch 打包元数据。
+*   **实现细节**：它会同时下载 `.SRCINFO` 和 `PKGBUILD`，解析其中的简单变量赋值，并生成一些通用别名。
+*   **适用场景**：如果你想让 Copr 包跟随 AUR 包维护者提供的版本号、日期、build id、commit 等字段。
 
 这个专家很特殊，它不去源码仓库，而是去 **Arch Linux 的 AUR 社区**。
 
 *   **它的逻辑**：
-    1.  **下载脚本**：它去下载该包在 AUR 里的 `PKGBUILD` 原始文本文件。
-    2.  **正则搜索**：它不像前两个调 API 拿 JSON，它是用**正则表达式**（`re.search`）去文本里找。
-    3.  **匹配模式**：它寻找以 `pkgver=` 开头的行，然后把后面的内容抠出来。
-*   **返回结果**：`{"version": "2.1.3"}`
-*   **优点**：如果你发现某个软件在 AUR 里有人维护得很好，你可以直接“抄” AUR 的版本，省去自己研究怎么定版本号的麻烦。
+    1.  **下载元数据**：下载该包在 AUR 里的 `.SRCINFO` 和 `PKGBUILD`。
+    2.  **解析简单变量**：扫描 `pkgver=...`、`pkgdate=...`、`_build=...`、`_commit=...` 这类简单标量赋值。
+    3.  **跳过复杂 shell 结构**：数组、函数、命令替换不会被当成字段，例如 `source=(...)`、`pkgver() { ... }`、`_build=$(...)`。
+    4.  **生成别名**：`pkgver` 会变成 `version`，`pkgdate` 会变成 `date` / `package_date`，`_xxx` 会额外暴露成 `xxx`。
+*   **返回结果示例**：`{"pkgver": "2.0.10", "version": "2.0.10", "_build": "5119448496078848", "build": "5119448496078848"}`
+*   **优点**：以后 AUR 包如果新增简单字段，通常只需要在 `packages.toml` 的 `transforms` 里引用它，不需要改 `common.py`。
+
+更详细的字段解析流程见 [aur_field_parsing.md](./aur_field_parsing.md)。
 
 ### 4. `get_gitea_release` (Gitea 平台专家)
 *   **它的活儿**：逻辑和 GitHub Release 类似，但它是专门为 **Gitea**（一种类似 GitHub 的自建代码托管平台）设计的。
@@ -74,7 +77,7 @@ Gitea 是一个开源版的 GitHub。如果软件托管在私有服务器上（�
 | :--- | :--- | :--- | :--- |
 | **Release 专家** | GitHub | 发布的 Tag | `v1.2` |
 | **Commit 专家** | GitHub | 最新的代码修改 | `a1b2c3d` + `20231027` |
-| **AUR 专家** | Arch AUR | `PKGBUILD` 里的定义 | `3.4.5` |
+| **AUR 专家** | Arch AUR | `.SRCINFO` / `PKGBUILD` 里的简单变量 | `3.4.5`、`_build`、`pkgdate` |
 | **Gitea 专家** | 自建 Git | 稳定版的 Tag | `v2.0` |
 
 **脚本的高明之处在于**：无论这些专家在外面跑业务有多辛苦（调 API、爬网页、搜正则），它们回到 `fetch_upstream_data` 函数时，都会统一把情报装进一个**字典**里交上去，让主脚本可以不用关心细节，直接进行下一步。
@@ -121,13 +124,25 @@ fetch_upstream_data` 的返回结果就是一个 **Python 字典**。根据不�
 
 ---
 
-### 3. 针对 `aur` 类型 (以 `zotero` 为例)
-逻辑和 Release 类似，就是从 PKGBUILD 里抠出的字符串。
+### 3. 针对 `aur` 类型
+AUR 类型会从 `.SRCINFO` 和 `PKGBUILD` 中解析简单变量，并返回一个字段更丰富的字典。
 
-*   **输入配置**：`{"type": "aur", "repo": "zotero-bin"}`
-*   **返回字典**：
+*   **输入配置**：`{"type": "aur", "repo": "antigravity"}`
+*   **返回字典示例**：
 ```python
 {
+    "pkgver": "2.0.10",
+    "version": "2.0.10",
+    "_build": "5119448496078848",
+    "build": "5119448496078848"
+}
+```
+
+对于只有 `pkgver` 的普通 AUR 包，返回结果可能仍然很简单：
+
+```python
+{
+    "pkgver": "7.0.3",
     "version": "7.0.3"
 }
 ```
