@@ -6,14 +6,6 @@
 %global __requires_exclude ^lib(EGL|GLESv2|ffmpeg|vk_swiftshader|vulkan)\.so.*$
 %global package_version 2.0.10
 %global upstream_build 5119448496078848
-%ifarch x86_64
-%global upstream_platform linux-x64
-%global upstream_arch x86_64
-%endif
-%ifarch aarch64
-%global upstream_platform linux-arm
-%global upstream_arch aarch64
-%endif
 
 Name:           antigravity
 Version:        %{package_version}
@@ -22,9 +14,10 @@ Summary:        Google Antigravity multi-agent orchestration platform
 
 License:        LicenseRef-Google-Antigravity
 URL:            https://antigravity.google/product/antigravity-2
-Source0:        https://storage.googleapis.com/antigravity-public/antigravity-hub/%{version}-%{upstream_build}/%{upstream_platform}/Antigravity.tar.gz#/Antigravity-%{version}-%{upstream_arch}.tar.gz
+Source0:        https://storage.googleapis.com/antigravity-public/antigravity-hub/%{version}-%{upstream_build}/linux-x64/Antigravity.tar.gz#/Antigravity-%{version}-x86_64.tar.gz
 Source1:        antigravity.desktop
 Source2:        antigravity.png
+Source3:        https://storage.googleapis.com/antigravity-public/antigravity-hub/%{version}-%{upstream_build}/linux-arm/Antigravity.tar.gz#/Antigravity-%{version}-aarch64.tar.gz
 
 ExclusiveArch:  x86_64 aarch64
 
@@ -65,7 +58,12 @@ This package installs the upstream prebuilt Linux release under
 
 %prep
 %setup -q -c -T -n %{name}-%{version}
+%ifarch x86_64
 %{__tar} -xzf %{SOURCE0}
+%endif
+%ifarch aarch64
+%{__tar} -xzf %{SOURCE3}
+%endif
 
 %build
 # Upstream ships prebuilt binaries.
