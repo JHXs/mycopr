@@ -4,8 +4,8 @@
 %global _build_id_links none
 %global __provides_exclude_from ^/opt/Antigravity/.*$
 %global __requires_exclude ^lib(EGL|GLESv2|ffmpeg|vk_swiftshader|vulkan)\.so.*$
-%global package_version 2.0.10
-%global upstream_build 5119448496078848
+%global package_version 2.0.11
+%global upstream_build 5731625217163264
 
 Name:           antigravity
 Version:        %{package_version}
