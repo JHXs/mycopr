@@ -89,5 +89,5 @@ install -Dpm0644 %{buildroot}/opt/Antigravity/LICENSES.chromium.html %{buildroot
 %{_datadir}/pixmaps/%{name}.png
 
 %changelog
-* Tue Jun 02 2026 Hansel <hansel@example.com> - 2.0.10-1
+* Tue Jun 02 2026 Hansel <ikunji@duck.com> - 2.0.10-1
 - Initial package for Google Antigravity
