@@ -130,6 +130,24 @@ def get_gitea_release(api_base, repo):
     releases = [r for r in resp.json() if not r.get("prerelease", False)]
     return {"version": releases[0]["tag_name"]} if releases else None
 
+# manifest 相关函数
+def get_manifest_version(manifest_url):
+    """Fetch version from a remote JSON manifest.
+
+    The manifest is expected to have a ``"latest"`` key whose value is the
+    upstream version string.  Any other top-level keys are also collected and
+    returned so they can be referenced by ``transforms`` in packages.toml.
+    """
+    resp = httpx.get(manifest_url, follow_redirects=True)
+    resp.raise_for_status()
+    manifest = resp.json()
+    version = manifest.get("latest")
+    if not version:
+        raise RuntimeError(f"manifest at {manifest_url} missing 'latest' key")
+    result = dict(manifest)
+    result["version"] = version
+    return result
+
 def fetch_upstream_data(config):
     pkg_type = config["type"]
     if pkg_type in ["github_release"]:
@@ -140,6 +158,8 @@ def fetch_upstream_data(config):
         return get_aur_version(config["repo"])
     elif pkg_type == "gitea_release":
         return get_gitea_release(config.get("api_base"), config["repo"])
+    elif pkg_type == "manifest":
+        return get_manifest_version(config["repo"])
     return None
 
 def get_default_transforms(config):

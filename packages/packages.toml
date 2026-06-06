@@ -112,3 +112,9 @@ type = "aur"
 repo = "y-cruncher"
 spec = "packages/y-cruncher/y-cruncher.spec"
 copr_repos = ["ikunji/mycopr", "ikunji/y-cruncher"]
+
+[qoder-cli-cn]
+type = "manifest"
+repo = "https://static.qoder.com.cn/qoder-cli-cn/channels/manifest.json"
+spec = "packages/qoder-cli-cn/qoder-cli-cn.spec"
+copr_repos = ["ikunji/mycopr"]

@@ -35,7 +35,7 @@
 
 ### 核心脚本 (`scripts/`)
 
-- **`common.py`**: 核心逻辑库。包含了获取 GitHub (Release/Commit)、AUR、Gitea 上游数据的逻辑，以及版本号转换（Transform）和更新检测算法。
+- **`common.py`**: 核心逻辑库。包含了获取 GitHub (Release/Commit)、AUR、Gitea、Manifest 上游数据的逻辑，以及版本号转换（Transform）和更新检测算法。
 - **`check_upstream.py`**: 自动更新检测器。由 GitHub Actions 调用，遍历 `packages/packages.toml`，识别需要更新的包并生成构建矩阵。
 - **`update_spec.py`**: Spec 文件修改器。负责按照 `transforms` 配置更新 `.spec` 中的 `%global` 宏，必要时自动生成 Changelog 条目，并在非 commit 类包上重置 `Release`。
 - **`generate_readme_status.py`**: README 状态表生成器。根据 `packages/packages.toml` 和各个 `.spec` 里的 `Name:` 自动生成 Copr build status 表。
@@ -51,6 +51,7 @@
 - `github_commit`
 - `aur`
 - `gitea_release`
+- `manifest`
 
 ## 如何新增一个软件包
 
@@ -65,8 +66,8 @@
 
      ```toml
      [my-app]
-     type = "github_release"     # 支持: github_release, github_commit, aur, gitea_release
-     repo = "owner/repo"         # 上游仓库路径
+     type = "github_release"     # 支持: github_release, github_commit, aur, gitea_release, manifest
+     repo = "owner/repo"         # 上游仓库路径（manifest 类型填写完整 URL）
      spec = "packages/my-app/my-app.spec" # spec 文件路径
      copr_repos = ["user/repo"]  # 目标 Copr 仓库
      # 可选：版本号转换规则
@@ -81,6 +82,18 @@
    - `transforms`: 指定上游数据如何映射到 spec 中的 `%global` 变量。常用规则包括 `strip_v`、`dot`、`strip:TEXT`。
    - `update_changelog`: 仅在需要为 commit 类包自动追加 `%changelog` 条目时启用。
    - `reset_release`: 默认为 `true`。对 release 类包更新后会重置 `Release: 1%{?dist}`；commit 类包通常不需要。
+
+   `manifest` 类型适用于上游通过远程 JSON 文件发布版本信息的情况（例如 Qoder CLI CN）。
+   manifest 必须包含 `"latest"` 字段，其他顶层字段也会被收集并可用于 transforms：
+
+   ```toml
+   [my-manifest-pkg]
+   type = "manifest"
+   repo = "https://example.com/channels/manifest.json"
+   spec = "packages/my-manifest-pkg/my-manifest-pkg.spec"
+   copr_repos = ["user/repo"]
+   # transforms 默认使用 { package_version = "strip_v" }
+   ```
 
    `github_commit` 类型通常需要显式声明要更新的宏，例如：
 
