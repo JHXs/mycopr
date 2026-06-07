@@ -94,6 +94,12 @@ repo = "rgwood/systemctl-tui"
 spec = "packages/systemctl-tui/systemctl-tui.spec"
 copr_repos = ["ikunji/mycopr"]
 
+[computer-use-linux]
+type = "github_release"
+repo = "agent-sh/computer-use-linux"
+spec = "packages/computer-use-linux/computer-use-linux.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/computer-use-linux"]
+
 [claude-code]
 type = "aur"
 repo = "claude-code"
