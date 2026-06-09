@@ -100,6 +100,14 @@ repo = "agent-sh/computer-use-linux"
 spec = "packages/computer-use-linux/computer-use-linux.spec"
 copr_repos = ["ikunji/mycopr", "ikunji/computer-use-linux"]
 
+[blesh]
+type = "github_commit"
+repo = "akinomyoga/ble.sh"
+spec = "packages/blesh/blesh.spec"
+copr_repos = ["ikunji/mycopr"]
+transforms = { nightly_date = "raw", git_short = "raw" }
+reset_release = true
+
 [claude-code]
 type = "aur"
 repo = "claude-code"
