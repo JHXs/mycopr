@@ -127,6 +127,13 @@ repo = "y-cruncher"
 spec = "packages/y-cruncher/y-cruncher.spec"
 copr_repos = ["ikunji/mycopr", "ikunji/y-cruncher"]
 
+[mcloud]
+type = "aur"
+repo = "mcloud-electron"
+spec = "packages/mcloud/mcloud.spec"
+copr_repos = ["ikunji/mycopr"]
+transforms = { package_version = "raw", kylinv = "raw" }
+
 [qoder-cli-cn]
 type = "manifest"
 repo = "https://static.qoder.com.cn/qoder-cli-cn/channels/manifest.json"
