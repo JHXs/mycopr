@@ -29,6 +29,7 @@
 | `claude-code` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/claude-code/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/claude-code/) |
 | `antigravity` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/antigravity/package/antigravity/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/antigravity/package/antigravity/) |
 | `y-cruncher` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/y-cruncher/package/y-cruncher/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/y-cruncher/package/y-cruncher/) |
+| `mcloud` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/mcloud/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/mcloud/) |
 | `qoder-cli-cn` | [![Copr build status](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/qoder-cli-cn/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/ikunji/mycopr/package/qoder-cli-cn/) |
 <!-- AUTO-GENERATED:STATUS_TABLE:END -->
 
