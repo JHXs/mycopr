@@ -138,4 +138,4 @@ transforms = { package_version = "raw", kylinv = "raw" }
 type = "manifest"
 repo = "https://static.qoder.com.cn/qoder-cli-cn/channels/manifest.json"
 spec = "packages/qoder-cli-cn/qoder-cli-cn.spec"
-copr_repos = ["ikunji/mycopr"]
+copr_repos = ["ikunji/mycopr", "ikunji/qoder-cli-cn"]
