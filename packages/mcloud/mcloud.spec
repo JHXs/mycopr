@@ -4,7 +4,8 @@
 %global __brp_strip %{nil}
 %global __brp_strip_comment_note %{nil}
 %global __brp_strip_lto %{nil}
-%global __provides_exclude_from ^%{_libdir}/mcloud/.*$
+# 不让 /opt/apps 下的上游自带私有库参与自动 Provides，避免污染同一 COPR 项目的 buildroot
+%global __provides_exclude_from ^/opt/apps/%{appid}/.*$
 %global __requires_exclude ^libQt5.*\.so.*$
 %global __requires_exclude ^libicu.*\.so.*$
 # 跳过上游预编译二进制的 RPATH/RUNPATH 检查
