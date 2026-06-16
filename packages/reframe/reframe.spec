@@ -1,7 +1,7 @@
 %define debug_package %{nil}
 %global _debugsource_packages 0
 
-%global package_version 1.16.0
+%global package_version 1.17.0
 
 Name:           reframe
 Version:        %{package_version}
