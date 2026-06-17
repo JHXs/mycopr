@@ -2,7 +2,7 @@
 %global _debugsource_packages 0
 %global __strip /bin/true
 %global _build_id_links none
-%global package_version 0.2.7
+%global package_version 0.2.8
 
 Name:           computer-use-linux
 Version:        %{package_version}
