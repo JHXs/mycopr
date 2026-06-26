@@ -19,6 +19,7 @@ copr_repos = ["ikunji/mycopr", "ikunji/obsidian"]
 [proxybridge]
 type = "github_release"
 repo = "InterceptSuite/ProxyBridge"
+asset_filter = "Linux"
 spec = "packages/proxybridge/proxybridge.spec"
 copr_repos = ["ikunji/mycopr", "ikunji/proxybridge"]
 

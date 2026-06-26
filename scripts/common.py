@@ -30,11 +30,19 @@ def apply_transform(v, transform_str):
     return v
 
 # github 相关函数
-def get_github_release(repo):
-    url = f"https://api.github.com/repos/{repo}/releases/latest"
+def get_github_release(repo, asset_filter=None):
+    if not asset_filter:
+        url = f"https://api.github.com/repos/{repo}/releases/latest"
+        resp = httpx.get(url, follow_redirects=True)
+        resp.raise_for_status()
+        return {"version": resp.json()["tag_name"]}
+    url = f"https://api.github.com/repos/{repo}/releases?per_page=30"
     resp = httpx.get(url, follow_redirects=True)
     resp.raise_for_status()
-    return {"version": resp.json()["tag_name"]}
+    for release in resp.json():
+        if any(asset_filter in a["name"] for a in release.get("assets", [])):
+            return {"version": release["tag_name"]}
+    raise RuntimeError(f"no release with asset matching {asset_filter!r}")
 
 def get_github_commit(repo):
     url = f"https://api.github.com/repos/{repo}/commits?per_page=1"
@@ -151,7 +159,7 @@ def get_manifest_version(manifest_url):
 def fetch_upstream_data(config):
     pkg_type = config["type"]
     if pkg_type in ["github_release"]:
-        return get_github_release(config["repo"])
+        return get_github_release(config["repo"], config.get("asset_filter"))
     elif pkg_type == "github_commit":
         return get_github_commit(config["repo"])
     elif pkg_type == "aur":
