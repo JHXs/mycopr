@@ -128,6 +128,12 @@ repo = "y-cruncher"
 spec = "packages/y-cruncher/y-cruncher.spec"
 copr_repos = ["ikunji/mycopr", "ikunji/y-cruncher"]
 
+[realitlscanner]
+type = "github_release"
+repo = "XTLS/RealiTLScanner"
+spec = "packages/realitlscanner/realitlscanner.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/realitlscanner"]
+
 [mcloud]
 type = "aur"
 repo = "mcloud-electron"
