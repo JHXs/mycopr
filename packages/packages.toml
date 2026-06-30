@@ -132,7 +132,13 @@ copr_repos = ["ikunji/mycopr", "ikunji/y-cruncher"]
 type = "github_release"
 repo = "XTLS/RealiTLScanner"
 spec = "packages/realitlscanner/realitlscanner.spec"
-copr_repos = ["ikunji/mycopr", "ikunji/realitlscanner"]
+copr_repos = ["ikunji/mycopr", "ikunji/realitytools"]
+
+[realitychecker]
+type = "github_release"
+repo = "V2RaySSR/RealityChecker"
+spec = "packages/realitychecker/realitychecker.spec"
+copr_repos = ["ikunji/mycopr", "ikunji/realitytools"]
 
 [mcloud]
 type = "aur"

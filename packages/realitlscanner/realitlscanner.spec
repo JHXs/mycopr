@@ -21,6 +21,7 @@ RealiTLScanner is a TLS server scanner designed for scanning Reality servers.
 
 %build
 export CGO_ENABLED=0
+export GOTOOLCHAIN=auto
 go build -ldflags="-s -w" -o realitlscanner .
 
 %install
