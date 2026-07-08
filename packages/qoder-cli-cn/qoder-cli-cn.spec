@@ -2,7 +2,7 @@
 %global _debugsource_packages 0
 %global __strip /bin/true
 %global _build_id_links none
-%global package_version 1.0.38
+%global package_version 1.0.39
 
 Name:           qoder-cli-cn
 Version:        %{package_version}
