@@ -1,5 +1,5 @@
 %global debug_package %{nil}
-%global package_version 5.9.1
+%global package_version 5.9.2
 
 Name:           cc-switch-cli
 Version:        %{package_version}
