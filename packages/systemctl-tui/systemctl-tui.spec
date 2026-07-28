@@ -1,5 +1,5 @@
 %global debug_package %{nil}
-%global package_version 0.7.0
+%global package_version 0.8.0
 
 Name:           systemctl-tui
 Version:        %{package_version}
