@@ -1,5 +1,5 @@
-%global nightly_date 20260811
-%global git_short 95ae551
+%global nightly_date 20260818
+%global git_short 63c23e9
 %global snapshot %{nightly_date}git%{git_short}
 
 Name:           blesh
