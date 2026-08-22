@@ -2,9 +2,9 @@
 # Maintainer: IkunJi <ikunji@duck.com>
 
 %global git_url https://github.com/AOSC-Dev/krunner-pinyin-search
-%global git_commit 87598886467701cd8a97727149eedf45b9e1d60e
-%global git_short 8759888
-%global commit_date 20250923
+%global git_commit 7a8788199b93a4ed2afcb8a8976523a3beb9c518
+%global git_short 7a87881
+%global commit_date 20260820
 
 Name:           krunner-pinyin-search
 Version:        %{commit_date}
@@ -61,6 +61,9 @@ popd
 # 如果项目后续添加 LICENSE 文件，此行会自动包含它
 
 %changelog
+* Sat Aug 22 2026 GitHub Actions <actions@github.com> - 20260820git7a87881
+- Auto-update to commit 7a87881: use new pinyinmatch with libpinyin
+
 * Wed Apr 08 2026 Your Name <ikunji@duck.com> - 0.0.0-6.20250923git8759888
 - Remove optional files (.mo, LICENSE) from %%files to avoid "File not found" errors
 - Plugin installs correctly to %%{_libdir}/qt6/plugins/kf6/krunner/
