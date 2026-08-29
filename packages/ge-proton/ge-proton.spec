@@ -1,7 +1,7 @@
 %global         debug_package %{nil}
-%global package_version 11.5
+%global package_version 11.6
 %global         proton_name   GE-Proton
-%global proton_ver 11-5
+%global proton_ver 11-6
 %global         proton_nv     %{proton_name}%{proton_ver}
 %global         proton_dir    %{_datadir}/steam/compatibilitytools.d/%{name}
 
